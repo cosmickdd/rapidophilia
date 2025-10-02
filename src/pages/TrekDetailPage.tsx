@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Layout from '../components/layout/Layout';
 import Section from '../components/common/Section';
 import Button from '../components/common/Button';
-import { CountdownTimer, PriceOfferTimer } from '../components/common';
+import { PriceOfferTimer } from '../components/common';
 import { featuredTreks } from '../data/sampleData';
 import { 
   FiMapPin, 
@@ -164,25 +164,13 @@ const TrekDetailPage: React.FC = () => {
                       {trek.description}
                     </p>
 
-                    {/* Timer Components */}
-                    {trek.earlyBirdDeadline && (
-                      <div className="mb-6 sm:mb-8">
-                        <CountdownTimer 
-                          endDate={trek.earlyBirdDeadline}
-                          variant="prominent"
-                          size="md"
-                          showLabel={true}
-                          reason="Early Bird Offer Ends In"
-                        />
-                      </div>
-                    )}
-
+                    {/* Price Offer Timer Only */}
                     {trek.originalPrice && trek.originalPrice > trek.price && (
                       <div className="mb-6 sm:mb-8">
                         <PriceOfferTimer 
                           originalPrice={trek.originalPrice}
                           discountedPrice={trek.price}
-                          endTime={trek.earlyBirdDeadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+                          endTime={trek.earlyBirdDeadline || new Date(Date.now() + 2 * 60 * 60 * 1000)}
                         />
                       </div>
                     )}
