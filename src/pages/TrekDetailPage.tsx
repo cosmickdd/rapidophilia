@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Layout from '../components/layout/Layout';
 import Section from '../components/common/Section';
 import Button from '../components/common/Button';
+import { CountdownTimer, PriceOfferTimer } from '../components/common';
 import { featuredTreks } from '../data/sampleData';
 import { 
   FiMapPin, 
@@ -162,6 +163,50 @@ const TrekDetailPage: React.FC = () => {
                     <p className="text-lg text-gray-700 mb-8 leading-relaxed">
                       {trek.description}
                     </p>
+
+                    {/* Timer Components */}
+                    {trek.earlyBirdDeadline && (
+                      <div className="mb-8">
+                        <CountdownTimer 
+                          endDate={trek.earlyBirdDeadline}
+                          variant="prominent"
+                          size="md"
+                          showLabel={true}
+                          reason="Early Bird Offer Ends In"
+                        />
+                      </div>
+                    )}
+
+                    {trek.originalPrice && trek.originalPrice > trek.price && (
+                      <div className="mb-8">
+                        <PriceOfferTimer 
+                          originalPrice={trek.originalPrice}
+                          discountedPrice={trek.price}
+                          endTime={trek.earlyBirdDeadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Limited Seats Warning */}
+                    {trek.seatsRemaining && trek.seatsRemaining <= 5 && (
+                      <div className="mb-8">
+                        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm text-orange-700">
+                                <span className="font-medium">Only {trek.seatsRemaining} seats remaining!</span>
+                                {trek.limitedSeats && ` Limited to ${trek.limitedSeats} participants total.`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* What's Included */}
                     <div className="mb-8">
@@ -375,10 +420,29 @@ const TrekDetailPage: React.FC = () => {
                   {/* Price Card */}
                   <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
                     <div className="text-center mb-6">
-                      <span className="text-4xl font-bold text-purple-600">
-                        ₹{trek.price.toLocaleString()}
-                      </span>
-                      <span className="text-gray-500 block">per person</span>
+                      {trek.originalPrice && trek.originalPrice > trek.price ? (
+                        <div>
+                          <div className="flex items-center justify-center space-x-2 mb-1">
+                            <span className="text-2xl text-gray-400 line-through">
+                              ₹{trek.originalPrice.toLocaleString()}
+                            </span>
+                            <span className="bg-green-100 text-green-800 text-sm font-medium px-2 py-1 rounded">
+                              {Math.round(((trek.originalPrice - trek.price) / trek.originalPrice) * 100)}% OFF
+                            </span>
+                          </div>
+                          <span className="text-4xl font-bold text-purple-600">
+                            ₹{trek.price.toLocaleString()}
+                          </span>
+                          <span className="text-gray-500 block">per person</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-4xl font-bold text-purple-600">
+                            ₹{trek.price.toLocaleString()}
+                          </span>
+                          <span className="text-gray-500 block">per person</span>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="space-y-4 mb-6">
@@ -394,6 +458,14 @@ const TrekDetailPage: React.FC = () => {
                         <span className="text-gray-600">Group Size</span>
                         <span className="font-semibold">Max {trek.maxGroupSize}</span>
                       </div>
+                      {trek.seatsRemaining && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Seats Left</span>
+                          <span className={`font-semibold ${trek.seatsRemaining <= 3 ? 'text-red-600' : trek.seatsRemaining <= 5 ? 'text-orange-600' : 'text-green-600'}`}>
+                            {trek.seatsRemaining}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-600">Rating</span>
                         <div className="flex items-center">

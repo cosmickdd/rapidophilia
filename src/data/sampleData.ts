@@ -35,7 +35,10 @@ export const featuredTreks: Trek[] = [
     bestTimeToVisit: 'March-June, September-November',
     maxGroupSize: 15,
     rating: 4.6,
-    reviews: []
+    reviews: [],
+    earlyBirdDeadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+    limitedSeats: 15,
+    seatsRemaining: 3
   },
   {
     id: '2',
@@ -44,7 +47,8 @@ export const featuredTreks: Trek[] = [
     shortDescription: 'Summit the highest peak in lower Himalayas with spectacular 360° views.',
     location: 'Dehradun, Uttarakhand',
     duration: '2 days',
-    price: 1599,
+    price: 1999,
+    originalPrice: 3000,
     difficulty: 'Moderate',
     image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
     gallery: [],
@@ -71,7 +75,9 @@ export const featuredTreks: Trek[] = [
     bestTimeToVisit: 'October-March, April-June',
     maxGroupSize: 12,
     rating: 4.8,
-    reviews: []
+    reviews: [],
+    limitedSeats: 12,
+    seatsRemaining: 2
   },
   {
     id: '3',

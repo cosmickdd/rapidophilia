@@ -6,6 +6,7 @@ export interface Trek {
   location: string;
   duration: string;
   price: number;
+  originalPrice?: number;
   difficulty: 'Easy' | 'Moderate' | 'Challenging' | 'Extreme';
   image: string;
   gallery: string[];
@@ -16,6 +17,9 @@ export interface Trek {
   maxGroupSize: number;
   rating: number;
   reviews: Review[];
+  earlyBirdDeadline?: Date;
+  limitedSeats?: number;
+  seatsRemaining?: number;
 }
 
 export interface Adventure {
