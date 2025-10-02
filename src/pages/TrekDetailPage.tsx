@@ -95,13 +95,13 @@ const TrekDetailPage: React.FC = () => {
                     <span className="text-sm font-medium">{trek.rating}/5</span>
                   </div>
                 </div>
-                <h1 className="text-4xl lg:text-6xl font-bold mb-4">
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4">
                   {trek.title}
                 </h1>
-                <p className="text-xl lg:text-2xl text-gray-200 mb-6">
+                <p className="text-lg sm:text-xl lg:text-2xl text-gray-200 mb-6">
                   {trek.shortDescription}
                 </p>
-                <div className="flex flex-wrap items-center gap-6 text-lg">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm sm:text-lg">
                   <div className="flex items-center">
                     {FiMapPin({ className: "h-5 w-5 mr-2" })}
                     <span>{trek.location}</span>
@@ -123,8 +123,8 @@ const TrekDetailPage: React.FC = () => {
         {/* Navigation Tabs */}
         <Section className="py-0">
           <div className="container-custom">
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8">
+            <div className="border-b border-gray-200 overflow-x-auto">
+              <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max px-4 sm:px-0">
                 {[
                   { id: 'overview', label: 'Overview' },
                   { id: 'itinerary', label: 'Itinerary' },
@@ -133,7 +133,7 @@ const TrekDetailPage: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-purple-500 text-purple-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -148,9 +148,9 @@ const TrekDetailPage: React.FC = () => {
         </Section>
 
         {/* Tab Content */}
-        <Section className="py-12">
+        <Section className="py-6 sm:py-12">
           <div className="container-custom">
-            <div className="grid lg:grid-cols-3 gap-12">
+            <div className="grid lg:grid-cols-3 gap-6 lg:gap-12">
               {/* Main Content */}
               <div className="lg:col-span-2">
                 {activeTab === 'overview' && (
@@ -159,14 +159,14 @@ const TrekDetailPage: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                   >
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">About This Trek</h2>
-                    <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">About This Trek</h2>
+                    <p className="text-base sm:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">
                       {trek.description}
                     </p>
 
                     {/* Timer Components */}
                     {trek.earlyBirdDeadline && (
-                      <div className="mb-8">
+                      <div className="mb-6 sm:mb-8">
                         <CountdownTimer 
                           endDate={trek.earlyBirdDeadline}
                           variant="prominent"
@@ -178,7 +178,7 @@ const TrekDetailPage: React.FC = () => {
                     )}
 
                     {trek.originalPrice && trek.originalPrice > trek.price && (
-                      <div className="mb-8">
+                      <div className="mb-6 sm:mb-8">
                         <PriceOfferTimer 
                           originalPrice={trek.originalPrice}
                           discountedPrice={trek.price}
@@ -189,16 +189,16 @@ const TrekDetailPage: React.FC = () => {
 
                     {/* Limited Seats Warning */}
                     {trek.seatsRemaining && trek.seatsRemaining <= 5 && (
-                      <div className="mb-8">
-                        <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
+                      <div className="mb-6 sm:mb-8">
+                        <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-r-lg">
                           <div className="flex">
                             <div className="flex-shrink-0">
-                              <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                               </svg>
                             </div>
-                            <div className="ml-3">
-                              <p className="text-sm text-orange-700">
+                            <div className="ml-2 sm:ml-3">
+                              <p className="text-xs sm:text-sm text-orange-700">
                                 <span className="font-medium">Only {trek.seatsRemaining} seats remaining!</span>
                                 {trek.limitedSeats && ` Limited to ${trek.limitedSeats} participants total.`}
                               </p>
@@ -416,60 +416,60 @@ const TrekDetailPage: React.FC = () => {
 
               {/* Sidebar */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24">
+                <div className="lg:sticky lg:top-24">
                   {/* Price Card */}
-                  <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-                    <div className="text-center mb-6">
+                  <div className="bg-white border border-gray-200 rounded-xl lg:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+                    <div className="text-center mb-4 sm:mb-6">
                       {trek.originalPrice && trek.originalPrice > trek.price ? (
                         <div>
                           <div className="flex items-center justify-center space-x-2 mb-1">
-                            <span className="text-2xl text-gray-400 line-through">
+                            <span className="text-lg sm:text-2xl text-gray-400 line-through">
                               ₹{trek.originalPrice.toLocaleString()}
                             </span>
-                            <span className="bg-green-100 text-green-800 text-sm font-medium px-2 py-1 rounded">
+                            <span className="bg-green-100 text-green-800 text-xs sm:text-sm font-medium px-2 py-1 rounded">
                               {Math.round(((trek.originalPrice - trek.price) / trek.originalPrice) * 100)}% OFF
                             </span>
                           </div>
-                          <span className="text-4xl font-bold text-purple-600">
+                          <span className="text-2xl sm:text-4xl font-bold text-purple-600">
                             ₹{trek.price.toLocaleString()}
                           </span>
-                          <span className="text-gray-500 block">per person</span>
+                          <span className="text-gray-500 block text-sm sm:text-base">per person</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="text-4xl font-bold text-purple-600">
+                          <span className="text-2xl sm:text-4xl font-bold text-purple-600">
                             ₹{trek.price.toLocaleString()}
                           </span>
-                          <span className="text-gray-500 block">per person</span>
+                          <span className="text-gray-500 block text-sm sm:text-base">per person</span>
                         </div>
                       )}
                     </div>
                     
-                    <div className="space-y-4 mb-6">
-                      <div className="flex justify-between">
+                    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                      <div className="flex justify-between text-sm sm:text-base">
                         <span className="text-gray-600">Duration</span>
                         <span className="font-semibold">{trek.duration}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm sm:text-base">
                         <span className="text-gray-600">Difficulty</span>
                         <span className="font-semibold">{trek.difficulty}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm sm:text-base">
                         <span className="text-gray-600">Group Size</span>
                         <span className="font-semibold">Max {trek.maxGroupSize}</span>
                       </div>
                       {trek.seatsRemaining && (
-                        <div className="flex justify-between">
+                        <div className="flex justify-between text-sm sm:text-base">
                           <span className="text-gray-600">Seats Left</span>
                           <span className={`font-semibold ${trek.seatsRemaining <= 3 ? 'text-red-600' : trek.seatsRemaining <= 5 ? 'text-orange-600' : 'text-green-600'}`}>
                             {trek.seatsRemaining}
                           </span>
                         </div>
                       )}
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm sm:text-base">
                         <span className="text-gray-600">Rating</span>
                         <div className="flex items-center">
-                          {FiStar({ className: "h-4 w-4 text-yellow-500 mr-1" })}
+                          {FiStar({ className: "h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 mr-1" })}
                           <span className="font-semibold">{trek.rating}/5</span>
                         </div>
                       </div>

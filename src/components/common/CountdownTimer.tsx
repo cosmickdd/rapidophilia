@@ -50,18 +50,23 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
         return;
       }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-      const totalHours = Math.floor(difference / (1000 * 60 * 60));
+      // Enforce maximum 2 hours (7200000 milliseconds)
+      const maxDuration = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      const limitedDifference = Math.min(difference, maxDuration);
+
+      const days = 0; // Always 0 since max is 2 hours
+      const hours = Math.floor(limitedDifference / (1000 * 60 * 60));
+      const minutes = Math.floor((limitedDifference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((limitedDifference % (1000 * 60)) / 1000);
+      const totalHours = Math.floor(limitedDifference / (1000 * 60 * 60));
 
       setTimeRemaining({ days, hours, minutes, seconds, totalHours });
 
-      // Set urgency level based on time remaining
-      if (totalHours <= 6) {
+      // Set urgency level based on time remaining (adjusted for 2-hour max)
+      const totalMinutes = limitedDifference / (1000 * 60);
+      if (totalMinutes <= 30) {
         setUrgencyLevel('high');
-      } else if (totalHours <= 24) {
+      } else if (totalMinutes <= 60) {
         setUrgencyLevel('medium');
       } else {
         setUrgencyLevel('low');
@@ -78,30 +83,30 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     switch (size) {
       case 'sm':
         return {
-          container: 'p-3',
-          timeBox: 'px-2 py-1 min-w-[45px]',
-          timeNumber: 'text-lg font-bold',
+          container: 'p-2 sm:p-3',
+          timeBox: 'px-1 py-1 min-w-[30px] sm:px-1.5 sm:min-w-[35px]',
+          timeNumber: 'text-xs sm:text-sm font-bold',
           timeLabel: 'text-xs',
-          headerText: 'text-sm',
-          spacing: 'space-x-1'
+          headerText: 'text-xs',
+          spacing: 'space-x-1 sm:space-x-1.5'
         };
       case 'lg':
         return {
-          container: 'p-6',
-          timeBox: 'px-4 py-3 min-w-[80px]',
-          timeNumber: 'text-3xl font-black',
-          timeLabel: 'text-sm',
-          headerText: 'text-lg',
-          spacing: 'space-x-4'
+          container: 'p-3 sm:p-4',
+          timeBox: 'px-2 py-1.5 min-w-[45px] sm:px-3 sm:py-2 sm:min-w-[60px]',
+          timeNumber: 'text-lg sm:text-xl font-bold',
+          timeLabel: 'text-xs',
+          headerText: 'text-sm sm:text-base',
+          spacing: 'space-x-1.5 sm:space-x-2'
         };
       default: // 'md'
         return {
-          container: 'p-4',
-          timeBox: 'px-3 py-2 min-w-[65px]',
-          timeNumber: 'text-2xl font-bold',
+          container: 'p-2 sm:p-3',
+          timeBox: 'px-1.5 py-1 min-w-[40px] sm:px-2 sm:py-1.5 sm:min-w-[50px]',
+          timeNumber: 'text-base sm:text-lg font-bold',
           timeLabel: 'text-xs',
-          headerText: 'text-base',
-          spacing: 'space-x-3'
+          headerText: 'text-xs sm:text-sm',
+          spacing: 'space-x-1.5 sm:space-x-2'
         };
     }
   };

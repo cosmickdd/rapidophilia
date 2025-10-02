@@ -36,7 +36,7 @@ export const featuredTreks: Trek[] = [
     maxGroupSize: 15,
     rating: 4.6,
     reviews: [],
-    earlyBirdDeadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+    earlyBirdDeadline: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
     limitedSeats: 15,
     seatsRemaining: 3
   },
