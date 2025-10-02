@@ -234,6 +234,7 @@ const HomePage: React.FC = () => {
           </Button>
         </motion.div>
       </Section>
+      </Section>
 
       {/* Testimonials */}
       <Section padding="xl" background="gray">
