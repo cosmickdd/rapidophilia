@@ -2,25 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface PriceOfferTimerProps {
-  endTime: Date;
-  originalPrice: number;
-  discountedPrice: number;
+  originalPrice?: number;
+  discountedPrice?: number;
   className?: string;
+  compact?: boolean;
 }
 
 interface TimeRemaining {
+  days: number;
   hours: number;
   minutes: number;
   seconds: number;
 }
 
 const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
-  endTime,
   originalPrice,
   discountedPrice,
-  className = ''
+  className = '',
+  compact = false
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>({
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0
@@ -28,38 +30,108 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
 
   const [isExpired, setIsExpired] = useState(false);
 
+  // Function to get next Thursday 12 PM
+  const getNextThursdayDeadline = () => {
+    const now = new Date();
+    const nextThursday = new Date();
+    
+    // Get current day (0 = Sunday, 1 = Monday, ..., 4 = Thursday, 6 = Saturday)
+    const currentDay = now.getDay();
+    const currentHour = now.getHours();
+    
+    // Calculate days until next Thursday
+    let daysUntilThursday = (4 - currentDay + 7) % 7;
+    
+    // If today is Thursday and it's before 12 PM, deadline is today at 12 PM
+    if (currentDay === 4 && currentHour < 12) {
+      daysUntilThursday = 0;
+    } 
+    // If today is Thursday and it's after 12 PM, deadline is next Thursday
+    else if (currentDay === 4 && currentHour >= 12) {
+      daysUntilThursday = 7;
+    }
+    // If daysUntilThursday is 0 and it's not Thursday, it means we need next Thursday
+    else if (daysUntilThursday === 0) {
+      daysUntilThursday = 7;
+    }
+    
+    nextThursday.setDate(now.getDate() + daysUntilThursday);
+    nextThursday.setHours(12, 0, 0, 0); // Set to 12:00 PM
+    
+    return nextThursday;
+  };
+
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date().getTime();
-      const endTimeStamp = endTime.getTime();
-      const difference = endTimeStamp - now;
+      const deadline = getNextThursdayDeadline().getTime();
+      const difference = deadline - now;
 
       if (difference > 0) {
-        // Limit to maximum 2 hours
-        const maxDifference = Math.min(difference, 2 * 60 * 60 * 1000);
-        
-        const hours = Math.floor(maxDifference / (1000 * 60 * 60));
-        const minutes = Math.floor((maxDifference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((maxDifference % (1000 * 60)) / 1000);
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-        setTimeRemaining({ hours, minutes, seconds });
+        setTimeRemaining({ days, hours, minutes, seconds });
         setIsExpired(false);
       } else {
-        setTimeRemaining({ hours: 0, minutes: 0, seconds: 0 });
+        // If expired, reset to next Thursday
+        setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         setIsExpired(true);
+        // Auto-reset after a brief moment
+        setTimeout(() => {
+          const newDeadline = getNextThursdayDeadline();
+          const newDifference = newDeadline.getTime() - new Date().getTime();
+          
+          if (newDifference > 0) {
+            const days = Math.floor(newDifference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((newDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((newDifference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((newDifference % (1000 * 60)) / 1000);
+            
+            setTimeRemaining({ days, hours, minutes, seconds });
+            setIsExpired(false);
+          }
+        }, 1000);
       }
     };
 
     calculateTimeRemaining();
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, []); // No dependencies needed since we calculate deadline dynamically
 
-  const savingsAmount = originalPrice - discountedPrice;
-  const savingsPercentage = Math.round((savingsAmount / originalPrice) * 100);
+  const savingsAmount = originalPrice && discountedPrice ? originalPrice - discountedPrice : 0;
+  const savingsPercentage = originalPrice && discountedPrice ? Math.round((savingsAmount / originalPrice) * 100) : 0;
 
   if (isExpired) {
     return null;
+  }
+
+  // Compact mode for navbar
+  if (compact) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg px-3 py-2 max-w-fit mx-auto"
+      >
+        <span className="text-xs font-medium text-red-600 text-center">Registration Ends:</span>
+        <div className="flex items-center space-x-1 text-xs font-bold">
+          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
+            {timeRemaining.days}d
+          </span>
+          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
+            {timeRemaining.hours.toString().padStart(2, '0')}h
+          </span>
+          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
+            {timeRemaining.minutes.toString().padStart(2, '0')}m
+          </span>
+        </div>
+      </motion.div>
+    );
   }
 
   return (
@@ -102,10 +174,10 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
               
               <div>
                 <h3 className="text-xs sm:text-lg font-black text-gray-900 leading-tight">
-                  Limited Time
+                  Registration Deadline
                 </h3>
                 <p className="text-xs sm:text-sm font-bold text-orange-600 leading-tight">
-                  Special Offer
+                  Thursday 12:00 PM
                 </p>
               </div>
             </div>
@@ -123,7 +195,45 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
         {/* Enhanced Countdown Display */}
         <div className="relative mb-4 sm:mb-6">
           <div className="bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 rounded-xl sm:rounded-3xl p-2 sm:p-6 border border-gray-200/50 shadow-inner">
-            <div className="flex items-center justify-center space-x-1 sm:space-x-3 md:space-x-4">
+            <div className="flex items-center justify-center space-x-1 sm:space-x-2 md:space-x-3">
+              {/* Days */}
+              {timeRemaining.days > 0 && (
+                <>
+                  <div className="text-center">
+                    <motion.div
+                      key={timeRemaining.days}
+                      initial={{ y: -15, opacity: 0, scale: 0.8 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="relative group"
+                    >
+                      <div className="bg-white rounded-lg sm:rounded-xl p-1.5 sm:p-3 shadow-lg border border-gray-200/80 min-w-[35px] sm:min-w-[60px] backdrop-blur-sm">
+                        <div className="absolute inset-0 bg-gradient-to-br from-orange-50/50 to-red-50/30 rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="relative text-sm sm:text-2xl font-black text-gray-900 tabular-nums">
+                          {timeRemaining.days.toString().padStart(2, '0')}
+                        </div>
+                        <div className="relative text-xs font-bold text-gray-600 uppercase tracking-wider mt-0.5 sm:mt-1">
+                          D
+                        </div>
+                      </div>
+                      <motion.div
+                        animate={{ scale: [1, 1.02, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute -inset-1 bg-gradient-to-r from-orange-200/30 to-red-200/30 rounded-lg sm:rounded-xl blur-sm opacity-50"
+                      />
+                    </motion.div>
+                  </div>
+                  
+                  <motion.div 
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="text-gray-600 text-sm sm:text-xl font-black pb-2 sm:pb-6"
+                  >
+                    :
+                  </motion.div>
+                </>
+              )}
+              
               {/* Hours */}
               <div className="text-center">
                 <motion.div
@@ -234,7 +344,7 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
               className="relative"
             >
               <span className="text-sm sm:text-xl font-bold text-gray-400 line-through">
-                ₹{originalPrice.toLocaleString()}
+                ₹{originalPrice?.toLocaleString() || '0'}
               </span>
               <div className="absolute inset-0 bg-red-500/20 transform -skew-x-12 rounded"></div>
             </motion.div>
@@ -251,7 +361,7 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
               className="inline-block"
             >
               <span className="text-xl sm:text-4xl font-black text-transparent bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text">
-                ₹{discountedPrice.toLocaleString()}
+                ₹{discountedPrice?.toLocaleString() || '0'}
               </span>
             </motion.div>
           </div>

@@ -28,6 +28,14 @@
   .btn-outline {
     @apply border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-purple-600 transition-all duration-300;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   
   .card-hover {
     @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-2;

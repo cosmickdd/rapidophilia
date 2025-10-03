@@ -39,7 +39,7 @@ const Footer: React.FC = () => {
   ];
 
   const contactInfo = [
-    { icon: FiPhone, text: '+1 (555) 123-4567' },
+    { icon: FiPhone, text: '+91 99111 92050' },
     { icon: FiMail, text: 'info@rapidophilia.com' },
     { icon: FiMapPin, text: '123 Adventure Street, Mountain View, CA 94041' },
   ];

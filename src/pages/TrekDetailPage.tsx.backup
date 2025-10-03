@@ -1,0 +1,1553 @@
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Layout from '../components/layout/Layout';
+import MinimalNavbar from '../components/layout/MinimalNavbar';
+import MinimalFooter from '../components/layout/MinimalFooter';
+import Section from '../components/common/Section';
+import Button from '../components/common/Button';
+import { PriceOfferTimer } from '../components/common';
+import { featuredTreks } from '../data/sampleData';
+import { sendBookingEmail } from '../utils/emailService';
+import { 
+  FiMapPin, 
+  FiClock, 
+  FiUsers, 
+  FiCalendar,
+  FiCheck,
+  FiX,
+  FiMail,
+  FiPhone
+} from 'react-icons/fi';
+
+// Custom Star component for React 19 compatibility
+const StarIcon = ({ className, filled = false }: { className?: string; filled?: boolean }) => (
+  <svg 
+    className={className} 
+    fill={filled ? "currentColor" : "none"} 
+    viewBox="0 0 24 24" 
+    stroke="currentColor"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" 
+    />
+  </svg>
+);
+
+// Custom Users icon component
+const UsersIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z" 
+    />
+  </svg>
+);
+
+// Custom Calendar icon component
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+    />
+  </svg>
+);
+
+// Custom MapPin icon component
+const MapPinIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" 
+    />
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" 
+    />
+  </svg>
+);
+
+// Custom Clock icon component
+const ClockIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
+    />
+  </svg>
+);
+
+const TrekDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const trek = featuredTreks.find(t => t.id === id);
+  const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'gallery' | 'reviews' | 'booking'>('overview');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    participants: 1,
+    trekChoice: '',
+    message: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+
+  // Check if this is the special minimal page
+  const isMinimalLayout = id === '2';
+
+  // Function to scroll to booking section
+  const scrollToBooking = () => {
+    setActiveTab('booking');
+    setTimeout(() => {
+      const bookingSection = document.getElementById('booking-section');
+      bookingSection?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  if (!trek) {
+    const LayoutComponent = isMinimalLayout ? 'div' : Layout;
+    const layoutProps = isMinimalLayout ? {} : {};
+    
+    return (
+      <LayoutComponent {...layoutProps}>
+        {isMinimalLayout && <MinimalNavbar onBookNowClick={scrollToBooking} />}
+        <div className={`min-h-screen flex items-center justify-center ${isMinimalLayout ? 'pt-20' : ''}`}>
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Trek Not Found</h1>
+            <p className="text-gray-600 mb-8">The trek you're looking for doesn't exist.</p>
+            <Link to="/trek">
+              <Button variant="primary">Back to Treks</Button>
+            </Link>
+          </div>
+        </div>
+        {isMinimalLayout && <MinimalFooter />}
+      </LayoutComponent>
+    );
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    setIsSubmitting(true);
+    setSubmitStatus({ type: null, message: '' });
+    
+    try {
+      const totalPrice = trek.price * formData.participants;
+      
+      const bookingData = {
+        ...formData,
+        totalPrice,
+        trekChoice: formData.trekChoice || trek.title
+      };
+      
+      const result = await sendBookingEmail(bookingData);
+      
+      if (result.success) {
+        setSubmitStatus({ type: 'success', message: result.message });
+        // Reset form on success
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          participants: 1,
+          trekChoice: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus({ type: 'error', message: result.message });
+      }
+    } catch (error) {
+      console.error('Booking submission error:', error);
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Failed to send booking request. Please try again or contact us directly.' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  return (
+    <>
+      {isMinimalLayout ? (
+        <>
+          <MinimalNavbar onBookNowClick={scrollToBooking} />
+          <div className="min-h-screen pt-20">
+            {/* Hero Section */}
+            <div className="relative h-[70vh] overflow-hidden">
+              <img
+                src={trek.image}
+                alt={trek.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+              <div className="absolute inset-0 flex items-end">
+                <div className="container-custom pb-16">
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="text-white max-w-4xl"
+                  >
+                    <div className="flex items-center space-x-4 mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${{
+                        'Easy': 'bg-green-500',
+                        'Moderate': 'bg-yellow-500',
+                        'Challenging': 'bg-orange-500',
+                        'Extreme': 'bg-red-500'
+                      }[trek.difficulty]}`}>
+                        {trek.difficulty}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <StarIcon className="h-4 w-4 text-yellow-400" filled={true} />
+                        <span className="text-sm font-medium">{trek.rating}/5</span>
+                      </div>
+                    </div>
+                    <h1 className="text-4xl sm:text-6xl font-bold mb-4">{trek.title}</h1>
+                    <p className="text-lg sm:text-xl mb-6 text-gray-200">{trek.description}</p>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+                      <div className="flex items-center space-x-2">
+                        <MapPinIcon className="h-5 w-5 text-gray-300" />
+                        <span className="text-sm">{trek.location}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <ClockIcon className="h-5 w-5 text-gray-300" />
+                        <span className="text-sm">{trek.duration}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <UsersIcon className="h-5 w-5 text-gray-300" />
+                        <span className="text-sm">Max {trek.maxGroupSize}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CalendarIcon className="h-5 w-5 text-gray-300" />
+                        <div className="flex items-center space-x-1">
+                          <span className="text-xs line-through text-gray-400">₹5,000</span>
+                          <span className="text-sm font-bold text-green-400">₹3,499</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                      <Button 
+                        variant="primary" 
+                        size="lg"
+                        onClick={scrollToBooking}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-2xl"
+                      >
+                        Book Now - ₹3,499
+                      </Button>
+                    </div>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile-First Tab Navigation */}
+            <div className="container-custom py-4">
+              {/* Mobile: Horizontal scroll tabs */}
+              <div className="sm:hidden">
+                <div 
+                  ref={(el) => {
+                    if (el && typeof window !== 'undefined') {
+                      // Auto-scroll to center the active tab
+                      const activeButton = el.querySelector(`[data-tab="${activeTab}"]`) as HTMLElement;
+                      if (activeButton) {
+                        const containerWidth = el.offsetWidth;
+                        const buttonLeft = activeButton.offsetLeft;
+                        const buttonWidth = activeButton.offsetWidth;
+                        const scrollPosition = buttonLeft - (containerWidth / 2) + (buttonWidth / 2);
+                        el.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                  className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide px-4"
+                >
+                  {[
+                    { id: 'overview', label: 'Overview' },
+                    { id: 'itinerary', label: 'Itinerary' },
+                    { id: 'gallery', label: 'Gallery' },
+                    { id: 'reviews', label: 'Reviews' },
+                    { id: 'booking', label: 'Book Now' }
+                  ].map((tab) => (
+                    <motion.button
+                      key={tab.id}
+                      data-tab={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      whileTap={{ scale: 0.95 }}
+                      className={`
+                        flex-shrink-0 px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 min-w-max relative
+                        ${
+                          activeTab === tab.id
+                            ? 'bg-purple-600 text-white shadow-lg'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                        }
+                      `}
+                    >
+                      <span>{tab.label}</span>
+                      {activeTab === tab.id && (
+                        <motion.div
+                          layoutId="mobileBubble"
+                          className="absolute inset-0 bg-purple-600 rounded-full -z-10"
+                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop: Grid tabs */}
+              <div className="hidden sm:block">
+                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-2">
+                  <div className="grid grid-cols-5 gap-2">
+                    {[
+                      { id: 'overview', label: 'Overview' },
+                      { id: 'itinerary', label: 'Itinerary', icon: '�️' },
+                      { id: 'gallery', label: 'Gallery' },
+                      { id: 'reviews', label: 'Reviews' },
+                      { id: 'booking', label: 'Book Now' }
+                    ].map((tab) => (
+                      <motion.button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`
+                          relative py-4 px-4 rounded-xl font-medium text-sm transition-all duration-300
+                          ${
+                            activeTab === tab.id
+                              ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                              : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm font-medium">{tab.label}</span>
+                        </div>
+                        {activeTab === tab.id && (
+                          <motion.div
+                            layoutId="activeTab"
+                            className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl -z-10"
+                            initial={false}
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          />
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <Section className="py-8">
+              <div className="max-w-6xl mx-auto">
+                {activeTab === 'overview' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="bg-white rounded-2xl shadow-xl p-8"
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Trek Overview</h2>
+                    <div className="prose prose-lg max-w-none">
+                      <p className="text-gray-700 leading-relaxed mb-6">
+                        {trek.description}
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6">
+                          <h3 className="text-xl font-bold text-gray-900 mb-4">Trek Highlights</h3>
+                          <ul className="space-y-2">
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-green-500 mr-2">✓</span>
+                              Breathtaking mountain views
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-green-500 mr-2">✓</span>
+                              Professional guide included
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-green-500 mr-2">✓</span>
+                              All meals provided
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-green-500 mr-2">✓</span>
+                              Safety equipment included
+                            </li>
+                          </ul>
+                        </div>
+                        <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-6">
+                          <h3 className="text-xl font-bold text-gray-900 mb-4">What to Bring</h3>
+                          <ul className="space-y-2">
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-orange-500 mr-2">•</span>
+                              Comfortable trekking shoes
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-orange-500 mr-2">•</span>
+                              Weather-appropriate clothing
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-orange-500 mr-2">•</span>
+                              Personal water bottle
+                            </li>
+                            <li className="flex items-center text-gray-700">
+                              <span className="text-orange-500 mr-2">•</span>
+                              Camera for memories
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'gallery' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="bg-white rounded-2xl shadow-xl p-8"
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Gallery</h2>
+                    
+                    {/* Featured Video Section */}
+                    <div className="mb-8">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Trek Experience Video</h3>
+                      <div className="relative aspect-[9/16] sm:aspect-video max-w-md sm:max-w-full bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          src="https://www.instagram.com/reel/DNd2V8QyoKO/embed"
+                          className="w-full h-full"
+                          frameBorder="0"
+                          scrolling="no"
+                          allowTransparency={true}
+                          title="Trek Experience Video"
+                        ></iframe>
+                      </div>
+                      <p className="text-gray-600 mt-2 text-sm">Experience the breathtaking journey through our trek highlights</p>
+                    </div>
+
+                    {/* Photo Gallery Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
+                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
+                          <img
+                            src={`${trek.image}?variant=${index}`}
+                            alt={`${trek.title} view ${index}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            onError={(e) => {
+                              e.currentTarget.src = trek.image;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="bg-white rounded-2xl shadow-xl p-8"
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Reviews & Testimonials</h2>
+                    <div className="space-y-6">
+                      {[
+                        {
+                          name: "Priya Sharma",
+                          avatar: "PS",
+                          rating: 5,
+                          review: "Absolutely amazing experience! The views were breathtaking and the guide was incredibly knowledgeable.",
+                          date: "2 weeks ago"
+                        },
+                        {
+                          name: "Rahul Verma", 
+                          avatar: "RV",
+                          rating: 5,
+                          review: "Perfect for beginners! Well organized and safe. Made some great friends along the way.",
+                          date: "1 month ago"
+                        },
+                        {
+                          name: "Anita Patel",
+                          avatar: "AP", 
+                          rating: 4,
+                          review: "Beautiful landscapes and great trek. The camping under stars was magical!",
+                          date: "6 weeks ago"
+                        }
+                      ].map((review, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg p-6">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-purple-600 font-bold text-sm">{review.avatar}</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-bold text-gray-900">{review.name}</h4>
+                                  <p className="text-gray-500 text-sm">{review.date}</p>
+                                </div>
+                                <div className="flex items-center">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <StarIcon 
+                                      key={star} 
+                                      className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                      filled={star <= review.rating}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-gray-700">{review.review}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'booking' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    id="booking-section"
+                  >
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Complete Your Booking</h2>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                      {/* Booking Form */}
+                      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 order-2 lg:order-1">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                First Name
+                              </label>
+                              <input
+                                type="text"
+                                name="firstName"
+                                value={formData.firstName}
+                                onChange={handleInputChange}
+                                required
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Enter your first name"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Last Name
+                              </label>
+                              <input
+                                type="text"
+                                name="lastName"
+                                value={formData.lastName}
+                                onChange={handleInputChange}
+                                required
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Enter your last name"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Email Address
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              placeholder="Enter your email"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Phone Number
+                            </label>
+                            <input
+                              type="tel"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              required
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              placeholder="Enter your phone number"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Number of Participants
+                            </label>
+                            <select
+                              name="participants"
+                              value={formData.participants}
+                              onChange={handleInputChange}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            >
+                              {[1, 2, 3, 4, 5, 6].map(num => (
+                                <option key={num} value={num}>{num} {num === 1 ? 'Person' : 'People'}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Additional Message (Optional)
+                            </label>
+                            <textarea
+                              name="message"
+                              value={formData.message}
+                              onChange={handleInputChange}
+                              rows={4}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              placeholder="Any special requirements or questions?"
+                            />
+                          </div>
+
+                          {submitStatus.type && (
+                            <div className={`p-4 rounded-lg ${submitStatus.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                              {submitStatus.message}
+                            </div>
+                          )}
+
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            size="lg"
+                            disabled={isSubmitting}
+                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                          >
+                            {isSubmitting ? 'Processing...' : `Book Now - ₹${(3499 * formData.participants).toLocaleString()}`}
+                          </Button>
+                        </form>
+                      </div>
+
+                      {/* Booking Summary */}
+                      <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
+                        {/* Price Offer Timer */}
+                        <PriceOfferTimer 
+                          originalPrice={5000}
+                          discountedPrice={3499}
+                        />
+
+                        {/* Booking Summary Card */}
+                        <div className="bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 rounded-2xl shadow-xl border border-purple-100/50 p-6 lg:p-8 backdrop-blur-sm">
+                          <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Booking Summary</h3>
+                            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                          </div>
+                          
+                          {/* Trek Details */}
+                          <div className="space-y-4 mb-8">
+                            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-purple-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm font-medium">Trek</span>
+                                <span className="font-bold text-gray-900 text-right max-w-[60%] text-sm lg:text-base">
+                                  {trek.title.length > 30 ? `${trek.title.substring(0, 30)}...` : trek.title}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-blue-100">
+                                <div className="text-center">
+                                  <span className="text-gray-600 text-xs font-medium block mb-1">Duration</span>
+                                  <span className="font-bold text-gray-900 text-sm">{trek.duration}</span>
+                                </div>
+                              </div>
+                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-green-100">
+                                <div className="text-center">
+                                  <span className="text-gray-600 text-xs font-medium block mb-1">Difficulty</span>
+                                  <span className={`font-bold text-sm ${
+                                    trek.difficulty === 'Easy' ? 'text-green-600' :
+                                    trek.difficulty === 'Moderate' ? 'text-yellow-600' :
+                                    trek.difficulty === 'Challenging' ? 'text-orange-600' : 'text-red-600'
+                                  }`}>{trek.difficulty}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-purple-100">
+                                <div className="text-center">
+                                  <span className="text-gray-600 text-xs font-medium block mb-1">Participants</span>
+                                  <span className="font-bold text-purple-600 text-sm">{formData.participants} {formData.participants === 1 ? 'person' : 'people'}</span>
+                                </div>
+                              </div>
+                              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 border border-yellow-100">
+                                <div className="text-center">
+                                  <span className="text-gray-600 text-xs font-medium block mb-1">Rating</span>
+                                  <div className="flex items-center justify-center">
+                                    <StarIcon className="h-3 w-3 text-yellow-500 mr-1" filled={true} />
+                                    <span className="font-bold text-yellow-600 text-sm">{trek.rating}/5</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-indigo-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600 text-sm font-medium">Price per person</span>
+                                <div className="text-right">
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-gray-400 text-sm line-through">₹5,000</span>
+                                    <span className="font-bold text-indigo-600 text-lg">₹3,499</span>
+                                  </div>
+                                  <span className="text-green-600 text-xs font-medium">30% OFF</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Enhanced Total Amount Section */}
+                          <motion.div 
+                            whileHover={{ scale: 1.02 }}
+                            className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-blue-700 rounded-2xl p-6 text-white shadow-2xl overflow-hidden"
+                          >
+                            {/* Background Pattern */}
+                            <div className="absolute inset-0 opacity-10">
+                              <div className="absolute top-4 right-4 w-20 h-20 bg-white rounded-full blur-2xl"></div>
+                              <div className="absolute bottom-4 left-4 w-16 h-16 bg-white rounded-full blur-xl"></div>
+                            </div>
+                            
+                            <div className="relative z-10">
+                              <div className="flex justify-between items-start mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span className="text-purple-100 text-sm font-medium">Total Amount</span>
+                                  </div>
+                                  <div className="flex items-baseline space-x-2">
+                                    <span className="text-3xl lg:text-4xl font-black tracking-tight">₹{(3499 * formData.participants).toLocaleString()}</span>
+                                    {formData.participants > 1 && (
+                                      <span className="text-purple-200 text-sm">
+                                        (₹3,499 × {formData.participants})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center space-x-2 mt-2">
+                                    <span className="text-green-300 text-sm font-semibold bg-green-500/20 px-2 py-1 rounded-full">
+                                      Save ₹{((5000 - 3499) * formData.participants).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-center">
+                                  <motion.div 
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                                    className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-2 shadow-lg"
+                                  >
+                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                    </svg>
+                                  </motion.div>
+                                  <div className="text-center">
+                                    <span className="text-yellow-200 text-xs font-semibold block">✨ All Inclusive</span>
+                                    <span className="text-purple-200 text-xs">No Hidden Costs</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Features Included */}
+                              <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/20">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-green-300">✓</span>
+                                  <span className="text-purple-100 text-xs">Professional Guide</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-green-300">✓</span>
+                                  <span className="text-purple-100 text-xs">Safety Equipment</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-green-300">✓</span>
+                                  <span className="text-purple-100 text-xs">All Meals</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-green-300">✓</span>
+                                  <span className="text-purple-100 text-xs">First Aid Support</span>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                          
+                          {/* Simplified Cancellation Policy Section */}
+                          <div className="mt-6">
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <h4 className="text-gray-800 font-medium text-sm mb-1">Cancellation Policy</h4>
+                                  <p className="text-gray-600 text-xs">
+                                    Free cancellation up to 24 hours before the trek.
+                                  </p>
+                                </div>
+                                
+                                <a href="#" className="text-blue-600 hover:text-blue-800 text-sm underline">
+                                  View Policy
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                                  <div className="flex items-center space-x-2 text-emerald-700">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <span>24h free cancellation</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2 text-emerald-700">
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                    <span>Instant refund process</span>
+                                  </div>
+                                  <div className="flex items-center space-x-2 text-emerald-700">
+                                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                                    <span>Weather protection</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </Section>
+          </div>
+          <MinimalFooter />
+        </>
+      ) : (
+        <Layout>
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <div className="relative h-[70vh] overflow-hidden">
+          <img
+            src={trek.image}
+            alt={trek.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+          <div className="absolute inset-0 flex items-end">
+            <div className="container-custom pb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-white max-w-4xl"
+              >
+                <div className="flex items-center space-x-4 mb-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${{
+                    'Easy': 'bg-green-500',
+                    'Moderate': 'bg-yellow-500',
+                    'Challenging': 'bg-orange-500',
+                    'Extreme': 'bg-red-500'
+                  }[trek.difficulty]}`}>
+                    {trek.difficulty}
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    <StarIcon className="h-4 w-4 text-yellow-400" filled={true} />
+                    <span className="text-sm font-medium">{trek.rating}/5</span>
+                  </div>
+                </div>
+                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4">
+                  {trek.title}
+                </h1>
+                <p className="text-lg sm:text-xl lg:text-2xl text-gray-200 mb-6">
+                  {trek.shortDescription}
+                </p>
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm sm:text-lg">
+                  <div className="flex items-center">
+                    {FiMapPin({ className: "h-5 w-5 mr-2" })}
+                    <span>{trek.location}</span>
+                  </div>
+                  <div className="flex items-center">
+                    {FiClock({ className: "h-5 w-5 mr-2" })}
+                    <span>{trek.duration}</span>
+                  </div>
+                  <div className="flex items-center">
+                    {FiUsers({ className: "h-5 w-5 mr-2" })}
+                    <span>Max {trek.maxGroupSize} people</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <Section className="py-0">
+          <div className="container-custom">
+            <div className="border-b border-gray-200 overflow-x-auto">
+              <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max px-4 sm:px-0">
+                {[
+                  { id: 'overview', label: 'Overview' },
+                  { id: 'itinerary', label: 'Itinerary' },
+                  { id: 'gallery', label: 'Gallery' },
+                  { id: 'reviews', label: 'Reviews' },
+                  { id: 'booking', label: 'Book Now' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors duration-200 whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'border-purple-500 text-purple-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </Section>
+
+        {/* Tab Content */}
+        <Section className="py-6 sm:py-12">
+          <div className="container-custom">
+            <div className="grid lg:grid-cols-3 gap-6 lg:gap-12">
+              {/* Main Content */}
+              <div className="lg:col-span-2">
+                {activeTab === 'overview' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">About This Trek</h2>
+                    <p className="text-base sm:text-lg text-gray-700 mb-6 sm:mb-8 leading-relaxed">
+                      {trek.description}
+                    </p>
+
+                    {/* Registration Deadline Timer */}
+                    {trek.originalPrice && trek.originalPrice > trek.price && (
+                      <div className="mb-6 sm:mb-8">
+                        <PriceOfferTimer 
+                          originalPrice={trek.originalPrice}
+                          discountedPrice={trek.price}
+                        />
+                      </div>
+                    )}
+
+                    {/* Limited Seats Warning */}
+                    {trek.seatsRemaining && trek.seatsRemaining <= 5 && (
+                      <div className="mb-6 sm:mb-8">
+                        <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-r-lg">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-2 sm:ml-3">
+                              <p className="text-xs sm:text-sm text-orange-700">
+                                <span className="font-medium">Only {trek.seatsRemaining} seats remaining!</span>
+                                {trek.limitedSeats && ` Limited to ${trek.limitedSeats} participants total.`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* What's Included */}
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">What's Included</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {trek.inclusions.map((item, index) => (
+                          <div key={index} className="flex items-center">
+                            {FiCheck({ className: "h-5 w-5 text-green-500 mr-3 flex-shrink-0" })}
+                            <span className="text-gray-700">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* What's Not Included */}
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">What's Not Included</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {trek.exclusions.map((item, index) => (
+                          <div key={index} className="flex items-center">
+                            {FiX({ className: "h-5 w-5 text-red-500 mr-3 flex-shrink-0" })}
+                            <span className="text-gray-700">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Best Time to Visit */}
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">Best Time to Visit</h3>
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                        <div className="flex items-center mb-2">
+                          {FiCalendar({ className: "h-5 w-5 text-purple-600 mr-2" })}
+                          <span className="font-semibold text-purple-900">Recommended Seasons</span>
+                        </div>
+                        <p className="text-purple-800">{trek.bestTimeToVisit}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'itinerary' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Daily Itinerary</h2>
+                    <div className="space-y-6">
+                      {trek.itinerary.map((day, index) => (
+                        <div key={index} className="bg-white border border-gray-200 rounded-lg p-6">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                              <span className="text-purple-600 font-bold">Day {day.day}</span>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">{day.title}</h3>
+                              <p className="text-gray-700 mb-4">{day.description}</p>
+                              
+                              <div className="grid md:grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <span className="font-semibold text-gray-900">Highlights:</span>
+                                  <ul className="mt-1 space-y-1">
+                                    {day.highlights.map((highlight, idx) => (
+                                      <li key={idx} className="text-gray-600">• {highlight}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-gray-900">Meals:</span>
+                                  <p className="mt-1 text-gray-600">{day.meals.join(', ')}</p>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-gray-900">Accommodation:</span>
+                                  <p className="mt-1 text-gray-600">{day.accommodation}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'gallery' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Gallery</h2>
+                    
+                    {/* Featured Video Section */}
+                    <div className="mb-8">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Trek Experience Video</h3>
+                      <div className="relative aspect-[9/16] sm:aspect-video max-w-md sm:max-w-full bg-black rounded-lg overflow-hidden">
+                        <iframe
+                          src="https://www.instagram.com/reel/DNd2V8QyoKO/embed"
+                          className="w-full h-full"
+                          frameBorder="0"
+                          scrolling="no"
+                          allowTransparency={true}
+                          title="Trek Experience Video"
+                        ></iframe>
+                      </div>
+                      <p className="text-gray-600 mt-2 text-sm">Experience the breathtaking journey through our trek highlights</p>
+                    </div>
+
+                    {/* Photo Gallery Grid */}
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Photo Gallery</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* Main featured image */}
+                        <div className="col-span-2 row-span-2">
+                          <div className="relative h-64 sm:h-80 rounded-lg overflow-hidden group cursor-pointer">
+                            <img
+                              src={trek.image}
+                              alt={`${trek.title} main view`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                          </div>
+                        </div>
+                        
+                        {/* Additional gallery images */}
+                        {[1, 2, 3, 4, 5, 6].map((index) => (
+                          <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
+                            <img
+                              src={`${trek.image}?variant=${index}`}
+                              alt={`${trek.title} view ${index}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              onError={(e) => {
+                                e.currentTarget.src = trek.image;
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 360° View Section */}
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">360° Mountain Views</h3>
+                      <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <span className="text-2xl">🏔️</span>
+                            </div>
+                            <p className="text-gray-600 font-medium">360° Virtual Tour Coming Soon</p>
+                            <p className="text-gray-500 text-sm mt-1">Experience the complete mountain panorama</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-3xl font-bold text-gray-900">Reviews & Testimonials</h2>
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <StarIcon key={star} className="h-5 w-5 text-yellow-400" filled={true} />
+                          ))}
+                        </div>
+                        <span className="text-lg font-bold text-gray-900">{trek.rating}/5</span>
+                        <span className="text-gray-500">(124 reviews)</span>
+                      </div>
+                    </div>
+
+                    {/* Review Statistics */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">4.8</div>
+                          <div className="text-gray-600 text-sm">Overall Rating</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">96%</div>
+                          <div className="text-gray-600 text-sm">Would Recommend</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">124</div>
+                          <div className="text-gray-600 text-sm">Total Reviews</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">98%</div>
+                          <div className="text-gray-600 text-sm">Completion Rate</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Review Slider */}
+                    <div className="space-y-6">
+                      {[
+                        {
+                          name: "Priya Sharma",
+                          avatar: "PS",
+                          date: "2 weeks ago",
+                          rating: 5,
+                          title: "Absolutely Amazing Experience!",
+                          review: "This trek exceeded all my expectations! The views were breathtaking, the guide was knowledgeable and friendly, and the entire organization was top-notch. The sunrise from the peak was a moment I'll treasure forever. Highly recommended for anyone looking for an adventure!",
+                          helpful: 23
+                        },
+                        {
+                          name: "Rahul Verma",
+                          avatar: "RV",
+                          date: "1 month ago", 
+                          rating: 5,
+                          title: "Perfect for Beginners",
+                          review: "As a first-time trekker, I was nervous about this adventure. But the team made sure I felt comfortable throughout. The pace was perfect, safety measures were excellent, and I made some great friends along the way. Already planning my next trek with them!",
+                          helpful: 18
+                        },
+                        {
+                          name: "Anita Patel",
+                          avatar: "AP",
+                          date: "6 weeks ago",
+                          rating: 4,
+                          title: "Great Trek, Amazing Memories",
+                          review: "Beautiful landscapes and well-organized trek. The camping under stars was magical. Only minor issue was the food could have been better, but overall an excellent experience. The photographs they provided were a nice bonus!",
+                          helpful: 31
+                        }
+                      ].map((review, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.6, delay: index * 0.1 }}
+                          className="bg-white border border-gray-200 rounded-lg p-6"
+                        >
+                          <div className="flex items-start space-x-4">
+                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-purple-600 font-bold text-sm">{review.avatar}</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-bold text-gray-900">{review.name}</h4>
+                                  <p className="text-gray-500 text-sm">{review.date}</p>
+                                </div>
+                                <div className="flex items-center">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <StarIcon 
+                                      key={star} 
+                                      className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                      filled={star <= review.rating}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <h5 className="font-semibold text-gray-900 mb-2">{review.title}</h5>
+                              <p className="text-gray-700 mb-3">{review.review}</p>
+                              <div className="flex items-center justify-between">
+                                <button className="text-gray-500 hover:text-purple-600 text-sm flex items-center">
+                                  <span className="mr-1">👍</span>
+                                  Helpful ({review.helpful})
+                                </button>
+                                <button className="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                                  Reply
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Write Review Section */}
+                    <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6">
+                      <h3 className="text-xl font-bold text-gray-900 mb-4">Share Your Experience</h3>
+                      <p className="text-gray-600 mb-4">Help other adventurers by sharing your trek experience!</p>
+                      <Button 
+                        variant="primary" 
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        Write a Review
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'booking' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Book Your Adventure</h2>
+                    
+                    {/* Status Messages */}
+                    {submitStatus.type && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 rounded-lg mb-6 ${
+                          submitStatus.type === 'success' 
+                            ? 'bg-green-50 border border-green-200 text-green-800' 
+                            : 'bg-red-50 border border-red-200 text-red-800'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          {submitStatus.type === 'success' ? (
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          {submitStatus.message}
+                        </div>
+                      </motion.div>
+                    )}
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            First Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="firstName"
+                            required
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Last Name
+                          </label>
+                          <input
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email *
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            required
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Phone *
+                          </label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            required
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Planning for which Trek? *
+                          </label>
+                          <select
+                            name="trekChoice"
+                            required
+                            value={formData.trekChoice}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          >
+                            <option value="">Select Trek</option>
+                            <option value={trek.title}>{trek.title}</option>
+                            <option value="Nag Tibba, Dehradun - 1N/2D">Nag Tibba, Dehradun - 1N/2D</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            How many people? *
+                          </label>
+                          <select
+                            name="participants"
+                            required
+                            value={formData.participants}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          >
+                            {Array.from({ length: trek.maxGroupSize }, (_, i) => (
+                              <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'person' : 'people'}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Additional Message
+                        </label>
+                        <textarea
+                          name="message"
+                          rows={4}
+                          value={formData.message}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                          placeholder="Any special requirements or questions..."
+                        />
+                      </div>
+
+                      <Button 
+                        type="submit" 
+                        variant="primary" 
+                        size="lg" 
+                        className="w-full"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <div className="flex items-center justify-center">
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Sending Request...
+                          </div>
+                        ) : (
+                          'Submit Booking Request'
+                        )}
+                      </Button>
+                    </form>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="lg:sticky lg:top-24">
+                  {/* Price Card */}
+                  <div className="bg-white border border-gray-200 rounded-xl lg:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+                    <div className="text-center mb-4 sm:mb-6">
+                      {trek.originalPrice && trek.originalPrice > trek.price ? (
+                        <div>
+                          <div className="flex items-center justify-center space-x-2 mb-1">
+                            <span className="text-lg sm:text-2xl text-gray-400 line-through">
+                              ₹{trek.originalPrice.toLocaleString()}
+                            </span>
+                            <span className="bg-green-100 text-green-800 text-xs sm:text-sm font-medium px-2 py-1 rounded">
+                              {Math.round(((trek.originalPrice - trek.price) / trek.originalPrice) * 100)}% OFF
+                            </span>
+                          </div>
+                          <span className="text-2xl sm:text-4xl font-bold text-purple-600">
+                            ₹{trek.price.toLocaleString()}
+                          </span>
+                          <span className="text-gray-500 block text-sm sm:text-base">per person</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="text-2xl sm:text-4xl font-bold text-purple-600">
+                            ₹{trek.price.toLocaleString()}
+                          </span>
+                          <span className="text-gray-500 block text-sm sm:text-base">per person</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">Duration</span>
+                        <span className="font-semibold">{trek.duration}</span>
+                      </div>
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">Difficulty</span>
+                        <span className="font-semibold">{trek.difficulty}</span>
+                      </div>
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">Group Size</span>
+                        <span className="font-semibold">Max {trek.maxGroupSize}</span>
+                      </div>
+                      {trek.seatsRemaining && (
+                        <div className="flex justify-between text-sm sm:text-base">
+                          <span className="text-gray-600">Seats Left</span>
+                          <span className={`font-semibold ${trek.seatsRemaining <= 3 ? 'text-red-600' : trek.seatsRemaining <= 5 ? 'text-orange-600' : 'text-green-600'}`}>
+                            {trek.seatsRemaining}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm sm:text-base">
+                        <span className="text-gray-600">Rating</span>
+                        <div className="flex items-center">
+                          <StarIcon className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 mr-1" filled={true} />
+                          <span className="font-semibold">{trek.rating}/5</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      variant="primary" 
+                      size="lg" 
+                      className="w-full mb-4"
+                      onClick={() => setActiveTab('booking')}
+                    >
+                      Book Now
+                    </Button>
+                    
+                    <div className="text-center text-sm text-gray-500">
+                      Free cancellation up to 24 hours before
+                    </div>
+                  </div>
+
+                  {/* Contact Card */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-purple-900 mb-4">Need Help?</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        {FiMail({ className: "h-5 w-5 text-purple-600 mr-3" })}
+                        <div>
+                          <div className="text-sm text-purple-800">Email us</div>
+                          <a href="mailto:support@rapidophilia.com" className="text-purple-600 text-sm font-medium">
+                            support@rapidophilia.com
+                          </a>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        {FiPhone({ className: "h-5 w-5 text-purple-600 mr-3" })}
+                        <div>
+                          <div className="text-sm text-purple-800">Call us</div>
+                          <span className="text-purple-600 text-sm font-medium">+91 9999999999</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Section>
+      </div>
+    </Layout>
+      )}
+    </>
+  );
+};
+
+export default TrekDetailPage;
