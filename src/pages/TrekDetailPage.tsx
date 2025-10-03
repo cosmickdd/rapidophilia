@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/layout/Layout';
 import MinimalNavbar from '../components/layout/MinimalNavbar';
 import MinimalFooter from '../components/layout/MinimalFooter';
@@ -121,6 +121,22 @@ const TrekDetailPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showTimer, setShowTimer] = useState(() => {
+    // Remember user preference from localStorage
+    const savedPreference = localStorage.getItem('showPriceTimer');
+    return savedPreference !== 'false';
+  });
+  const [showDismissToast, setShowDismissToast] = useState(false);
+
+  // Save user preference when timer is dismissed
+  const handleTimerDismiss = () => {
+    setShowTimer(false);
+    localStorage.setItem('showPriceTimer', 'false');
+    
+    // Show brief success feedback
+    setShowDismissToast(true);
+    setTimeout(() => setShowDismissToast(false), 2000);
+  };
   
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -236,18 +252,24 @@ Please confirm my booking. Thank you!`;
     if (!showPaymentModal) return null;
 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={() => setShowPaymentModal(false)}
+      >
+        <div 
+          className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold">Complete Payment</h3>
               <button 
                 onClick={() => setShowPaymentModal(false)}
-                className="text-white/80 hover:text-white transition-colors"
+                className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-all duration-200 group border border-white/30"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
@@ -336,16 +358,30 @@ Please confirm my booking. Thank you!`;
               </ol>
             </div>
 
-            {/* WhatsApp Button */}
-            <button
-              onClick={handleWhatsAppShare}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-lg"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-              </svg>
-              <span>Send Payment Proof on WhatsApp</span>
-            </button>
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              {/* WhatsApp Button */}
+              <button
+                onClick={handleWhatsAppShare}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-lg"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                </svg>
+                <span>Send Payment Proof on WhatsApp</span>
+              </button>
+              
+              {/* Cancel Button */}
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>Cancel Booking</span>
+              </button>
+            </div>
 
             {/* Support */}
             <div className="text-center pt-4 border-t">
@@ -364,94 +400,153 @@ Please confirm my booking. Thank you!`;
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
           <MinimalNavbar onBookNowClick={() => setActiveTab('booking')} />
           
+          {/* Toggle Timer Below Navbar */}
+          {showTimer && (
+            <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-30 bg-white/95 backdrop-blur-md rounded-full px-4 py-2 shadow-lg border border-gray-200">
+              <div className="flex items-center space-x-3 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium text-gray-700">Limited Time Offer</span>
+                </div>
+                <div className="text-purple-600 font-bold">₹3,499</div>
+                <button
+                  onClick={handleTimerDismiss}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close offer"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="pt-16">
             {/* Enhanced Hero Section for Minimal Layout */}
-            <div className="relative h-screen overflow-hidden">
-              {/* Background Image with proper positioning */}
+            <div className="relative min-h-screen overflow-hidden">
+              {/* Background Image with proper positioning and optimization */}
               <div className="absolute inset-0">
                 <img
                   src={trek.image}
-                  alt={trek.title}
-                  className="w-full h-full object-cover object-center"
+                  alt={`${trek.title} - Adventure trek in the Himalayas`}
+                  className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
                   style={{ objectPosition: '50% 40%' }}
+                  loading="eager"
+                  decoding="async"
                 />
               </div>
               
               {/* Enhanced Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent"></div>
               
-              {/* Top Right Quick Info */}
-              <div className="absolute top-6 right-6 z-10">
-                <div className="bg-white/15 backdrop-blur-md rounded-xl p-3 border border-white/30">
-                  <div className="flex items-center space-x-2 text-white text-sm">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="font-medium">Available Now</span>
-                  </div>
+              {/* Centered Timer - Mobile Optimized */}
+              <AnimatePresence mode="wait">
+                {showTimer && (
+                  <div className="absolute top-4 left-4 right-4 z-20 sm:top-20 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 sm:w-full sm:max-w-sm sm:px-4">
+                    <motion.div
+                      initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="bg-white/95 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl border border-white/30 relative group"
+                    >
+                    {/* Enhanced Close Button */}
+                    <motion.button
+                      onClick={handleTimerDismiss}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="absolute -top-2 -right-2 bg-gray-800/80 hover:bg-gray-900 text-white rounded-full p-2 transition-all duration-200 shadow-lg hover:shadow-xl backdrop-blur-sm border border-white/20 group/close"
+                      aria-label="Dismiss timer"
+                      title="Close timer"
+                    >
+                      <svg className="w-4 h-4 group-hover/close:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </motion.button>
+
+                    {/* Dismissal Hint */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                        Click × to dismiss
+                      </div>
+                    </div>
+                    
+                    <PriceOfferTimer 
+                      originalPrice={5000}
+                      discountedPrice={3499}
+                      compact
+                      onDismiss={handleTimerDismiss}
+                    />
+                  </motion.div>
                 </div>
-              </div>
+                )}
+              </AnimatePresence>
               
-              {/* Main Content - Better positioned */}
-              <div className="absolute inset-0 flex flex-col justify-center items-center text-center z-10">
-                <div className="container mx-auto px-4 max-w-5xl">
+
+              
+              {/* Main Content - Better positioned for mobile and desktop */}
+              <div className="absolute inset-0 flex flex-col justify-center items-center text-center z-10 px-4 pt-12 sm:pt-8">
+                <div className="container mx-auto max-w-6xl">
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
+                    transition={{ duration: 0.8, delay: 0.6 }}
                     className="text-white"
                   >
                     {/* Badges Row */}
-                    <div className="flex justify-center items-center space-x-3 mb-6">
-                      <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                    <div className="flex justify-center items-center flex-wrap gap-4 mb-8">
+                      <span className={`px-5 py-3 rounded-full text-base sm:text-lg font-bold ${
                         trek.difficulty === 'Easy' ? 'bg-green-500' :
                         trek.difficulty === 'Moderate' ? 'bg-yellow-500' :
                         trek.difficulty === 'Challenging' ? 'bg-orange-500' : 'bg-red-500'
                       }`}>
                         {trek.difficulty}
                       </span>
-                      <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <StarIcon className="h-4 w-4 text-yellow-400 mr-1" filled={true} />
-                        <span className="text-sm font-semibold">{trek.rating}/5</span>
-                        <span className="text-xs text-gray-200 ml-2">(124 reviews)</span>
+                      <div className="flex items-center bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
+                        <StarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 mr-2" filled={true} />
+                        <span className="text-base sm:text-lg font-bold">{trek.rating}/5</span>
+                        <span className="text-sm text-gray-200 ml-3">(124 reviews)</span>
                       </div>
                     </div>
                     
                     {/* Main Title */}
-                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black mb-8 leading-tight tracking-tight">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight tracking-tight px-2">
                       {trek.title}
                     </h1>
                     
                     {/* Description */}
-                    <p className="text-xl sm:text-2xl lg:text-3xl text-gray-200 mb-10 max-w-4xl mx-auto leading-relaxed font-light">
-                      {trek.shortDescription}
+                    <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-gray-200 mb-8 sm:mb-10 max-w-4xl mx-auto leading-relaxed font-light px-4">
+                      Experience the breathtaking beauty of Nag Tibba, the highest peak in the lower Himalayas
                     </p>
                     
                     {/* Trek Details */}
-                    <div className="flex justify-center flex-wrap items-center gap-6 mb-10 text-sm sm:text-base">
-                      <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <MapPinIcon className="h-4 w-4 mr-2" />
-                        <span className="font-medium">{trek.location}</span>
+                    <div className="flex justify-center flex-wrap items-center gap-4 sm:gap-6 mb-8 sm:mb-10 text-sm sm:text-base px-2">
+                      <div className="flex items-center bg-white/15 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
+                        <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-3" />
+                        <span className="font-semibold">{trek.location}</span>
                       </div>
-                      <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <ClockIcon className="h-4 w-4 mr-2" />
-                        <span className="font-medium">{trek.duration}</span>
+                      <div className="flex items-center bg-white/15 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
+                        <ClockIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-3" />
+                        <span className="font-semibold">{trek.duration}</span>
                       </div>
-                      <div className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                        <UsersIcon className="h-4 w-4 mr-2" />
-                        <span className="font-medium">Max {trek.maxGroupSize} people</span>
+                      <div className="flex items-center bg-white/15 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
+                        <UsersIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-3" />
+                        <span className="font-semibold">Max {trek.maxGroupSize}</span>
                       </div>
                     </div>
                     
                     {/* Enhanced CTA Section */}
-                    <div className="flex flex-col items-center space-y-6">
+                    <div className="flex flex-col items-center space-y-8">
                       {/* Price Display */}
-                      <div className="bg-black/30 backdrop-blur-lg rounded-3xl px-8 py-6 border border-white/30 shadow-2xl">
+                      <div className="bg-black/30 backdrop-blur-lg rounded-2xl sm:rounded-3xl px-6 sm:px-8 py-6 sm:py-8 border border-white/30 shadow-2xl mx-4">
                         <div className="text-center">
-                          <div className="flex items-center justify-center space-x-3 mb-2">
-                            <span className="text-xl text-gray-300 line-through">₹5,000</span>
-                            <span className="bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full animate-pulse">30% OFF</span>
+                          <div className="flex items-center justify-center space-x-4 mb-3">
+                            <span className="text-lg sm:text-2xl text-gray-300 line-through">₹5,000</span>
+                            <span className="bg-green-500 text-white text-sm sm:text-base font-bold px-3 py-2 rounded-full animate-pulse">30% OFF</span>
                           </div>
-                          <div className="text-4xl sm:text-5xl font-black text-yellow-400 mb-1">₹3,499</div>
-                          <div className="text-base text-gray-200">per person</div>
+                          <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-yellow-400 mb-2">₹3,499</div>
+                          <div className="text-base sm:text-lg text-gray-200">per person</div>
                         </div>
                       </div>
                       
@@ -460,27 +555,27 @@ Please confirm my booking. Thank you!`;
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveTab('booking')}
-                        className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-12 py-5 rounded-2xl font-bold text-xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300"
+                        className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
                       >
-                        <span>Book Now</span>
+                        <span>Book Now - ₹3,499</span>
                       </motion.button>
                     </div>
                     
                     {/* Quick Features */}
-                    <div className="mt-10 flex justify-center">
-                      <div className="bg-black/20 backdrop-blur-lg rounded-2xl px-8 py-4 border border-white/20">
-                        <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
+                    <div className="mt-8 sm:mt-10 flex justify-center px-4">
+                      <div className="bg-black/20 backdrop-blur-lg rounded-xl sm:rounded-2xl px-4 sm:px-8 py-3 sm:py-4 border border-white/20">
+                        <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-sm sm:text-base">
                           <div className="flex items-center space-x-2">
                             <span className="text-green-400 text-lg">✓</span>
-                            <span className="font-medium">Travel & Food</span>
+                            <span className="font-semibold">Travel & Food</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-green-400 text-lg">✓</span>
-                            <span className="font-medium">Accommodation</span>
+                            <span className="font-semibold">Stay</span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-green-400">✓</span>
-                            <span>Expert Guide</span>
+                            <span className="text-green-400 text-lg">✓</span>
+                            <span className="font-semibold">Guide</span>
                           </div>
                         </div>
                       </div>
@@ -489,16 +584,23 @@ Please confirm my booking. Thank you!`;
                 </div>
               </div>
               
-              {/* Scroll Indicator */}
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+              {/* Enhanced Scroll Indicator */}
+              <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-10">
                 <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-white opacity-70"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 1 }}
+                  className="flex flex-col items-center space-y-1 sm:space-y-2"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
+                  <motion.div
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-white/70 bg-white/10 rounded-full p-1.5 sm:p-2 backdrop-blur-sm border border-white/20"
+                  >
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </motion.div>
                 </motion.div>
               </div>
             </div>
@@ -529,14 +631,17 @@ Please confirm my booking. Thank you!`;
                       }}
                       whileTap={{ scale: 0.95 }}
                       className={`
-                        flex-shrink-0 px-4 py-3 rounded-full font-medium text-sm transition-all duration-300 min-w-max
+                        flex-shrink-0 px-4 py-3 rounded-full font-medium text-sm transition-all duration-300 min-w-max focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
                         ${
                           activeTab === tab.id
                             ? 'bg-purple-600 text-white shadow-lg'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300 hover:shadow-sm'
                         }
                       `}
                       id={`tab-${tab.id}`}
+                      role="tab"
+                      aria-selected={activeTab === tab.id}
+                      aria-controls={`tabpanel-${tab.id}`}
                     >
                       {tab.label}
                     </motion.button>
@@ -585,9 +690,9 @@ Please confirm my booking. Thank you!`;
               </div>
             </div>
 
-            {/* Tab Content */}
+            {/* Enhanced Tab Content */}
             <Section className="py-8">
-              <div className="max-w-6xl mx-auto">
+              <div className="max-w-6xl mx-auto" role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
                 {activeTab === 'overview' && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -661,6 +766,18 @@ Please confirm my booking. Thank you!`;
                         <span className="font-semibold text-purple-900">Recommended Seasons</span>
                       </div>
                       <p className="text-purple-800">{trek.bestTimeToVisit}</p>
+                    </div>
+
+                    {/* Book Now Button */}
+                    <div className="mt-6 sm:mt-8 text-center">
+                      <motion.button
+                        onClick={() => setActiveTab('booking')}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
+                      >
+                        Book This Trek - ₹3,499
+                      </motion.button>
                     </div>
                   </motion.div>
                 )}
@@ -1564,6 +1681,24 @@ Please confirm my booking. Thank you!`;
       
       {/* Payment Modal */}
       <PaymentModal />
+      
+      {/* Timer Dismissed Toast */}
+      <AnimatePresence>
+        {showDismissToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.3 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.3 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="fixed bottom-6 right-6 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-medium">Timer dismissed</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 };

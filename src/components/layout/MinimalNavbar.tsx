@@ -1,60 +1,64 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { PriceOfferTimer } from '../common';
 
 interface MinimalNavbarProps {
   onBookNowClick: () => void;
 }
 
 const MinimalNavbar: React.FC<MinimalNavbarProps> = ({ onBookNowClick }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200"
+      className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-200 transition-all duration-300"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Brand */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-purple-800 rounded-lg flex items-center justify-center shadow-md">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+      {/* Solid white navbar - no glass overlay needed */}
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-18">
+          {/* Enhanced Logo and Brand */}
+          <div className="flex items-center space-x-3 group">
+            <motion.div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg bg-gradient-to-br from-purple-600 to-purple-800 transition-all duration-300"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg className={`w-5 h-5 transition-colors duration-300 ${
+                isScrolled ? 'text-white' : 'text-white'
+              }`} viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2L2 22h20L12 2zm0 4.5L18.5 20h-13L12 6.5z"/>
               </svg>
-            </div>
-            <span className="text-xl font-semibold text-gray-900 tracking-tight">
+            </motion.div>
+            <span className="text-xl font-black tracking-tight text-gray-900">
               Rapidophilia
             </span>
-          </Link>
+          </div>
 
-          {/* Timer and Book Now */}
-          <div className="flex items-center space-x-4">
-            {/* Compact Timer */}
-            <div className="hidden sm:block">
-              <PriceOfferTimer compact />
-            </div>
-            
-            {/* Book Now Button */}
+          {/* Enhanced Book Now Button */}
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <motion.button
               onClick={onBookNowClick}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300"
+              className="relative overflow-hidden px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
             >
-              Book Now
+              <span className="relative z-10">Book Now</span>
             </motion.button>
           </div>
         </div>
 
-        {/* Mobile Timer - Centered */}
-        <div className="sm:hidden pb-3 pt-1">
-          <div className="flex justify-center">
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-2 max-w-fit">
-              <PriceOfferTimer compact />
-            </div>
-          </div>
-        </div>
+        {/* Mobile timer removed - will be positioned separately */}
       </div>
     </motion.nav>
   );

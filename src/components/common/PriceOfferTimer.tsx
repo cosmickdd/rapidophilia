@@ -6,6 +6,7 @@ interface PriceOfferTimerProps {
   discountedPrice?: number;
   className?: string;
   compact?: boolean;
+  onDismiss?: () => void;
 }
 
 interface TimeRemaining {
@@ -19,7 +20,8 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
   originalPrice,
   discountedPrice,
   className = '',
-  compact = false
+  compact = false,
+  onDismiss
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>({
     days: 0,
@@ -109,26 +111,84 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
     return null;
   }
 
-  // Compact mode for navbar
+  // Enhanced compact mode for hero section
   if (compact) {
     return (
       <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center justify-center space-x-2 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg px-3 py-2 max-w-fit mx-auto"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-sm mx-auto"
       >
-        <span className="text-xs font-medium text-red-600 text-center">Registration Ends:</span>
-        <div className="flex items-center space-x-1 text-xs font-bold">
-          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
-            {timeRemaining.days}d
-          </span>
-          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
-            {timeRemaining.hours.toString().padStart(2, '0')}h
-          </span>
-          <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-xs">
-            {timeRemaining.minutes.toString().padStart(2, '0')}m
-          </span>
+        {/* Main timer container */}
+        <div className="bg-gradient-to-br from-white via-orange-50 to-red-50 border-2 border-orange-200 rounded-xl p-4 shadow-lg">
+          {/* Header with urgency indicator */}
+          <div className="flex items-center justify-center space-x-2 mb-3">
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="text-lg"
+            >
+              ⚡
+            </motion.div>
+            <h3 className="text-sm font-black text-gray-900 text-center">
+              LIMITED TIME OFFER
+            </h3>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-2 h-2 bg-red-500 rounded-full"
+            />
+          </div>
+
+          {/* Price comparison */}
+          <div className="text-center mb-3">
+            <div className="flex items-center justify-center space-x-2 mb-1">
+              <span className="text-sm text-gray-500 line-through">₹{originalPrice?.toLocaleString()}</span>
+              <motion.span
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full"
+              >
+                {savingsPercentage}% OFF
+              </motion.span>
+            </div>
+            <div className="text-2xl font-black text-green-600">₹{discountedPrice?.toLocaleString()}</div>
+            <div className="text-xs text-gray-600">per person</div>
+          </div>
+
+          {/* Countdown timer */}
+          <div className="mb-3">
+            <p className="text-xs font-bold text-center text-red-600 mb-2">Registration Ends In:</p>
+            <div className="flex items-center justify-center space-x-1">
+              {timeRemaining.days > 0 && (
+                <>
+                  <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold min-w-[30px] text-center">
+                    {timeRemaining.days}d
+                  </div>
+                  <span className="text-red-600 font-bold">:</span>
+                </>
+              )}
+              <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold min-w-[35px] text-center">
+                {timeRemaining.hours.toString().padStart(2, '0')}h
+              </div>
+              <span className="text-red-600 font-bold">:</span>
+              <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold min-w-[35px] text-center">
+                {timeRemaining.minutes.toString().padStart(2, '0')}m
+              </div>
+            </div>
+          </div>
+
+          {/* Savings highlight */}
+          <motion.div
+            animate={{ opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="bg-green-100 border border-green-300 rounded-lg p-2 text-center"
+          >
+            <p className="text-xs font-bold text-green-800">
+              💰 Save ₹{savingsAmount.toLocaleString()} Today!
+            </p>
+          </motion.div>
         </div>
       </motion.div>
     );
