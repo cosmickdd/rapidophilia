@@ -7,6 +7,7 @@ import MinimalFooter from '../components/layout/MinimalFooter';
 import Button from '../components/common/Button';
 import Section from '../components/common/Section';
 import PriceOfferTimer from '../components/common/PriceOfferTimer';
+import FAQSection from '../components/common/FAQSection';
 import { sendBookingEmail } from '../utils/emailService';
 import { initializeRazorpayPayment } from '../utils/razorpayService';
 
@@ -1329,6 +1330,9 @@ const TrekDetailPage: React.FC = () => {
                 )}
               </div>
             </Section>
+            
+            {/* FAQ Section */}
+            <FAQSection />
           </div>
           <MinimalFooter />
         </div>
