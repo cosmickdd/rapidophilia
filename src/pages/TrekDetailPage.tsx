@@ -128,6 +128,7 @@ const TrekDetailPage: React.FC = () => {
     return savedPreference !== 'false';
   });
   const [showDismissToast, setShowDismissToast] = useState(false);
+  const [showCancelPolicy, setShowCancelPolicy] = useState(false);
 
   // Save user preference when timer is dismissed
   const handleTimerDismiss = () => {
@@ -138,6 +139,15 @@ const TrekDetailPage: React.FC = () => {
     setShowDismissToast(true);
     setTimeout(() => setShowDismissToast(false), 2000);
   };
+
+  // Close cancellation modal on ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showCancelPolicy) setShowCancelPolicy(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showCancelPolicy]);
   
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -1317,7 +1327,7 @@ const TrekDetailPage: React.FC = () => {
                                     Refer to cancellation policy for peace of mind.
                                   </p>
                                 </div>
-                                <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                <button onClick={() => setShowCancelPolicy(true)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                   View Details
                                 </button>
                               </div>
@@ -1333,6 +1343,64 @@ const TrekDetailPage: React.FC = () => {
             
             {/* FAQ Section */}
             <FAQSection />
+
+            {/* Cancellation Policy Modal (minimal layout) */}
+            <AnimatePresence>
+              {showCancelPolicy && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center"
+                >
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.6 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 bg-black"
+                    onClick={() => setShowCancelPolicy(false)}
+                  />
+
+                  <motion.div
+                    initial={{ y: 40, opacity: 0, scale: 0.98 }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{ y: 20, opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.25 }}
+                    className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-4 p-6 sm:p-8 z-10"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="cancel-policy-title-min"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 id="cancel-policy-title-min" className="text-lg sm:text-xl font-semibold text-gray-900">Cancellation Policy</h3>
+                      <button
+                        onClick={() => setShowCancelPolicy(false)}
+                        className="text-gray-400 hover:text-gray-700 rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        aria-label="Close cancellation policy"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
+                      <p><strong>Flexible Cancellation:</strong> Free cancellation up to 24 hours before the trek start time. Cancellations within 24 hours are non-refundable.</p>
+                      <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure subject to availability and may incur a small fee.</p>
+                      <p><strong>Force Majeure:</strong> In case of adverse weather or local restrictions, we may cancel or postpone. Full refunds or alternate dates will be offered.</p>
+                      <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance.</p>
+                      <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies.</p>
+                    </div>
+
+                    <div className="mt-6 text-right">
+                      <button onClick={() => setShowCancelPolicy(false)} className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Close</button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
           </div>
           <MinimalFooter />
         </div>
@@ -1545,6 +1613,64 @@ const TrekDetailPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span className="text-sm font-medium">Timer dismissed</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Cancellation Policy Modal */}
+      <AnimatePresence>
+        {showCancelPolicy && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+          >
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 bg-black"
+              onClick={() => setShowCancelPolicy(false)}
+            />
+
+            <motion.div
+              initial={{ y: 40, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 20, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-4 p-6 sm:p-8 z-10"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cancel-policy-title"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <h3 id="cancel-policy-title" className="text-lg sm:text-xl font-semibold text-gray-900">Cancellation Policy</h3>
+                <button
+                  onClick={() => setShowCancelPolicy(false)}
+                  className="text-gray-400 hover:text-gray-700 rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  aria-label="Close cancellation policy"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
+                <p><strong>Flexible Cancellation:</strong> Free cancellation up to 24 hours before the trek start time. Cancellations within 24 hours are non-refundable.</p>
+                <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure subject to availability and may incur a small fee.</p>
+                <p><strong>Force Majeure:</strong> In case of adverse weather or local restrictions, we may cancel or postpone. Full refunds or alternate dates will be offered.</p>
+                <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance.</p>
+                <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies.</p>
+              </div>
+
+              <div className="mt-6 text-right">
+                <button onClick={() => setShowCancelPolicy(false)} className="px-5 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Close</button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
