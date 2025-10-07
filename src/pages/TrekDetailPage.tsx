@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Section from '../components/common/Section';
 import PriceOfferTimer from '../components/common/PriceOfferTimer';
 import { sendBookingEmail } from '../utils/emailService';
+import { initializeRazorpayPayment } from '../utils/razorpayService';
 
 // Icon Components
 const StarIcon = ({ className, filled }: { className?: string; filled?: boolean }) => (
@@ -63,7 +64,7 @@ const sampleTrek = {
   duration: "3N 2D",
   difficulty: "Moderate",
   location: "Dehradun, Uttarakhand",
-  price: 3499,
+  price: 3999,
   originalPrice: 5000,
   rating: 4.8,
   maxGroupSize: 15,
@@ -120,7 +121,6 @@ const TrekDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'gallery' | 'reviews' | 'booking'>('overview');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showTimer, setShowTimer] = useState(() => {
     // Remember user preference from localStorage
     const savedPreference = localStorage.getItem('showPriceTimer');
@@ -174,29 +174,62 @@ const TrekDetailPage: React.FC = () => {
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
 
-    // Show payment modal immediately
-    setShowPaymentModal(true);
-    
-    // Send email in background (don't wait for it)
-    sendBookingEmail({
-      ...formData,
-      totalPrice: 3499 * formData.participants,
-      trekTitle: trek.title
-    }).then(() => {
-      console.log('✅ Email sent successfully');
-      setSubmitStatus({
-        type: 'success',
-        message: 'Booking request submitted successfully! Pay to confirm your seat.'
+    const totalPrice = 3999 * formData.participants;
+
+    try {
+      // Start both payment and email processes in parallel
+      const paymentPromise = initializeRazorpayPayment({
+        amount: totalPrice,
+        customerName: `${formData.firstName} ${formData.lastName}`,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        description: `Trek Booking: ${trek.title} (${formData.participants} participant${formData.participants > 1 ? 's' : ''})`,
+        trekTitle: trek.title,
+        participants: formData.participants,
+        message: formData.message
       });
-    }).catch((error) => {
-      console.error('❌ Email sending failed:', error);
+
+      // Send email immediately in parallel (don't wait for it)
+      const emailPromise = sendBookingEmail({
+        ...formData,
+        totalPrice,
+        trekTitle: trek.title
+      });
+
+      // Handle email result separately
+      emailPromise
+        .then(() => {
+          console.log('✅ Email sent successfully');
+          setSubmitStatus({
+            type: 'success',
+            message: 'Form submitted successfully! Check your email for confirmation.'
+          });
+        })
+        .catch((error) => {
+          console.error('❌ Email sending failed:', error);
+          setSubmitStatus({
+            type: 'error',
+            message: 'Form submitted but email failed. We will contact you directly.'
+          });
+        });
+
+      // Wait for payment initialization and handle success
+      const paymentResponse = await paymentPromise;
+      
+      // Redirect to success page with booking data
+      if (paymentResponse && paymentResponse.bookingData) {
+        window.location.href = `/payment-success?booking_id=${paymentResponse.bookingData.bookingId}&payment_id=${paymentResponse.razorpay_payment_id}&status=paid`;
+      }
+      
+    } catch (error) {
+      console.error('❌ Payment initialization failed:', error);
       setSubmitStatus({
         type: 'error',
-        message: 'Booking submitted but email failed. We will contact you directly.'
+        message: 'Payment initialization failed. Please try again.'
       });
-    }).finally(() => {
+    } finally {
       setIsSubmitting(false);
-    });
+    }
   };
 
   if (!trek) {
@@ -212,188 +245,6 @@ const TrekDetailPage: React.FC = () => {
     );
   }
 
-  // Payment Modal Component
-  const PaymentModal = () => {
-    const totalAmount = 3499 * formData.participants;
-    const upiId = "yespay.mabs0487619ikit2445@yesbankltd"; // Updated UPI ID
-    const upiUrl = `upi://pay?pa=${upiId}&pn=Rapidophilia%20Travel%20Solutions&am=${totalAmount}&cu=INR&tn=Payment%20for%20${encodeURIComponent(trek.title)}%20Trek%20Booking`;
-    
-    const handleWhatsAppShare = () => {
-      const message = `Hi! I have completed the payment of ₹${totalAmount.toLocaleString()} for ${trek.title} trek booking.
-      
-Booking Details:
-- Name: ${formData.firstName} ${formData.lastName}
-- Participants: ${formData.participants}
-- Email: ${formData.email}
-- Phone: ${formData.phone}
-
-Bank Details Used:
-Account Name: RAPIDOPHILIA TRAVEL SOLUTIONS
-Account Number: 048761900002445
-Bank: Yes Bank
-IFSC: YESB0000487
-
-Please confirm my booking. Thank you!`;
-      
-      const whatsappUrl = `https://wa.me/919911192050?text=${encodeURIComponent(message)}`; // Updated WhatsApp number
-      window.open(whatsappUrl, '_blank');
-    };
-
-    const handleCopyAccountNumber = () => {
-      navigator.clipboard.writeText('048761900002445');
-      alert('Account Number copied to clipboard!');
-    };
-
-    const handleCopyUpiId = () => {
-      navigator.clipboard.writeText(upiId);
-      alert('UPI ID copied to clipboard!');
-    };
-
-    if (!showPaymentModal) return null;
-
-    return (
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={() => setShowPaymentModal(false)}
-      >
-        <div 
-          className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-2xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold">Complete Payment</h3>
-              <button 
-                onClick={() => setShowPaymentModal(false)}
-                className="bg-white/20 hover:bg-white/30 text-white rounded-full p-2 transition-all duration-200 group border border-white/30"
-              >
-                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="mt-2">
-              <p className="text-purple-100">Scan QR code or use UPI ID to pay</p>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* Amount Display */}
-            <div className="text-center bg-gray-50 rounded-xl p-4">
-              <p className="text-gray-600 text-sm">Total Amount</p>
-              <p className="text-3xl font-bold text-purple-600">₹{totalAmount.toLocaleString()}</p>
-              <p className="text-gray-500 text-sm mt-1">{formData.participants} participant{formData.participants > 1 ? 's' : ''} × ₹3,499</p>
-            </div>
-
-            {/* QR Code Section */}
-            <div className="text-center">
-              <h4 className="font-semibold text-gray-900 mb-3">Scan QR Code to Pay</h4>
-              <div className="bg-white border-2 border-gray-200 rounded-xl p-4 inline-block shadow-sm">
-                <img 
-                  src="/images/qr-code.png" 
-                  alt="UPI Payment QR Code" 
-                  className="w-48 h-48 rounded-lg mx-auto"
-                />
-              </div>
-              <div className="mt-4 space-y-2">
-                <p className="text-sm text-gray-600">UPI ID: <span className="font-mono font-medium">{upiId}</span></p>
-                <div className="flex gap-2 justify-center">
-                  <button 
-                    onClick={handleCopyUpiId}
-                    className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Copy UPI ID
-                  </button>
-                  <a 
-                    href={upiUrl}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Pay with UPI App
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* UPI ID Section */}
-            <div className="border-t pt-6">
-              <h4 className="font-semibold text-gray-900 mb-3">Or pay using Bank Details</h4>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                <div>
-                  <p className="text-sm text-gray-600">Account Name</p>
-                  <p className="font-semibold text-sm">RAPIDOPHILIA TRAVEL SOLUTIONS</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Account Number</p>
-                  <p className="font-mono text-lg">048761900002445</p>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <p className="text-sm text-gray-600">Bank</p>
-                    <p className="font-semibold text-sm">Yes Bank</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">IFSC Code</p>
-                    <p className="font-mono text-sm">YESB0000487</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={handleCopyAccountNumber}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full mt-2"
-                >
-                  Copy Account Number
-                </button>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h5 className="font-semibold text-blue-900 mb-2">Payment Instructions</h5>
-              <ol className="text-sm text-blue-800 space-y-1">
-                <li>1. Scan the QR code or copy UPI ID</li>
-                <li>2. Complete payment using your UPI app</li>
-                <li>3. Take screenshot of payment confirmation</li>
-                <li>4. Click "Send on WhatsApp" button below</li>
-              </ol>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3">
-              {/* WhatsApp Button */}
-              <button
-                onClick={handleWhatsAppShare}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center space-x-2 shadow-lg"
-              >
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                </svg>
-                <span>Send Payment Proof on WhatsApp</span>
-              </button>
-              
-              {/* Cancel Button */}
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Cancel Booking</span>
-              </button>
-            </div>
-
-            {/* Support */}
-            <div className="text-center pt-4 border-t">
-              <p className="text-sm text-gray-600">Need help? Contact us at</p>
-              <p className="text-sm font-medium text-purple-600">+91 99111 92050</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   if (isMinimalLayout) {
     return (
       <>
@@ -408,7 +259,7 @@ Please confirm my booking. Thank you!`;
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                   <span className="font-medium text-gray-700">Limited Time Offer</span>
                 </div>
-                <div className="text-purple-600 font-bold">₹3,499</div>
+                <div className="text-purple-600 font-bold">₹3,999</div>
                 <button
                   onClick={handleTimerDismiss}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -474,7 +325,7 @@ Please confirm my booking. Thank you!`;
                     
                     <PriceOfferTimer 
                       originalPrice={5000}
-                      discountedPrice={3499}
+                      discountedPrice={3999}
                       compact
                       onDismiss={handleTimerDismiss}
                     />
@@ -543,9 +394,9 @@ Please confirm my booking. Thank you!`;
                         <div className="text-center">
                           <div className="flex items-center justify-center space-x-4 mb-3">
                             <span className="text-lg sm:text-2xl text-gray-300 line-through">₹5,000</span>
-                            <span className="bg-green-500 text-white text-sm sm:text-base font-bold px-3 py-2 rounded-full animate-pulse">30% OFF</span>
+                            <span className="bg-green-500 text-white text-sm sm:text-base font-bold px-3 py-2 rounded-full animate-pulse">20% OFF</span>
                           </div>
-                          <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-yellow-400 mb-2">₹3,499</div>
+                          <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-yellow-400 mb-2">₹3,999</div>
                           <div className="text-base sm:text-lg text-gray-200">per person</div>
                         </div>
                       </div>
@@ -557,7 +408,7 @@ Please confirm my booking. Thank you!`;
                         onClick={() => setActiveTab('booking')}
                         className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
                       >
-                        <span>Book Now - ₹3,499</span>
+                        <span>Book Now - ₹3,999</span>
                       </motion.button>
                     </div>
                     
@@ -709,7 +560,7 @@ Please confirm my booking. Thank you!`;
                     <div className="mb-6 sm:mb-8">
                       <PriceOfferTimer 
                         originalPrice={5000}
-                        discountedPrice={3499}
+                        discountedPrice={3999}
                       />
                     </div>
 
@@ -776,7 +627,7 @@ Please confirm my booking. Thank you!`;
                         whileTap={{ scale: 0.98 }}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
                       >
-                        Book This Trek - ₹3,499
+                        Book This Trek - ₹3,999
                       </motion.button>
                     </div>
                   </motion.div>
@@ -941,7 +792,7 @@ Please confirm my booking. Thank you!`;
                         onClick={() => setActiveTab('booking')}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
                       >
-                        Book Now - ₹3,499
+                        Book Now - ₹3,999
                       </button>
                     </div>
                   </motion.div>
@@ -1326,7 +1177,7 @@ Please confirm my booking. Thank you!`;
                                   Processing...
                                 </div>
                               ) : (
-                                `Book Now - ₹${(3499 * formData.participants).toLocaleString()}`
+                                `Book Now - ₹${(3999 * formData.participants).toLocaleString()}`
                               )}
                             </Button>
                           </form>
@@ -1338,7 +1189,7 @@ Please confirm my booking. Thank you!`;
                         {/* Price Offer Timer */}
                         <PriceOfferTimer 
                           originalPrice={5000}
-                          discountedPrice={3499}
+                          discountedPrice={3999}
                         />
 
                         {/* Professional Booking Summary Card */}
@@ -1403,12 +1254,12 @@ Please confirm my booking. Thank you!`;
                                 <div className="text-right">
                                   <div className="flex items-center space-x-2">
                                     <span className="text-gray-400 text-sm line-through">₹5,000</span>
-                                    <span className="font-bold text-green-600">₹3,499</span>
+                                    <span className="font-bold text-green-600">₹3,999</span>
                                   </div>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">30% OFF</span>
+                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">20% OFF</span>
                               </div>
                             </div>
 
@@ -1417,12 +1268,12 @@ Please confirm my booking. Thank you!`;
                               <div className="flex justify-between items-center">
                                 <div>
                                   <p className="text-purple-100 text-sm font-medium">Total Amount</p>
-                                  <p className="text-2xl font-bold">₹{(3499 * formData.participants).toLocaleString()}</p>
+                                  <p className="text-2xl font-bold">₹{(3999 * formData.participants).toLocaleString()}</p>
                                   {formData.participants > 1 && (
-                                    <p className="text-purple-200 text-xs">(₹3,499 × {formData.participants})</p>
+                                    <p className="text-purple-200 text-xs">(₹3,999 × {formData.participants})</p>
                                   )}
                                   <p className="text-green-300 text-xs font-semibold mt-1">
-                                    Save ₹{((5000 - 3499) * formData.participants).toLocaleString()}
+                                    Save ₹{((5000 - 3999) * formData.participants).toLocaleString()}
                                   </p>
                                 </div>
                                 <div className="text-center">
@@ -1481,9 +1332,6 @@ Please confirm my booking. Thank you!`;
           </div>
           <MinimalFooter />
         </div>
-        
-        {/* Payment Modal */}
-        <PaymentModal />
       </>
     );
   }
@@ -1555,7 +1403,7 @@ Please confirm my booking. Thank you!`;
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
                     onClick={() => setActiveTab('booking')}
                   >
-                    Book Now - ₹3,499
+                    Book Now - ₹3,999
                   </Button>
                 </motion.div>
               </motion.div>
@@ -1678,9 +1526,6 @@ Please confirm my booking. Thank you!`;
           </div>
         </Section>
       </div>
-      
-      {/* Payment Modal */}
-      <PaymentModal />
       
       {/* Timer Dismissed Toast */}
       <AnimatePresence>

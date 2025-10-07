@@ -15,6 +15,8 @@ import {
   RefundPolicyPage,
   TermsOfUsePage
 } from './utils/lazyComponents';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import BookingVerificationPage from './pages/BookingVerificationPage';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
             <Route path="/explore" element={<ExplorePage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:id" element={<BlogDetailPage />} />
+            <Route path="/payment-success" element={<PaymentSuccessPage />} />
+            <Route path="/verify-booking/:bookingId" element={<BookingVerificationPage />} />
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-use" element={<TermsOfUsePage />} />
