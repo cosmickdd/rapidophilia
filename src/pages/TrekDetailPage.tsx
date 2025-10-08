@@ -60,7 +60,7 @@ const sampleTrek = {
   id: 2,
   title: "Trek To The Highest Peak Of Lower Himalayas - Nag Tibba",
   shortDescription: "Experience the breathtaking beauty of Nag Tibba, the highest peak in the lower Himalayas",
-  description: "Nag Tibba, standing at 3,022 meters, is the highest peak in the lower Himalayas and offers one of the most scenic trekking experiences in Uttarakhand. This trek is perfect for beginners and experienced trekkers alike, offering stunning views of the Bandarpoonch, Kedarnath, and Gangotri peaks.",
+  description: "Nag Tibba, standing at 3,022 meters (9,915 feet), is the highest peak in the lower Himalayas and offers one of the most scenic trekking experiences in Uttarakhand. This trek is perfect for beginners and experienced trekkers alike, offering stunning views of the Bandarpoonch, Kedarnath, and Gangotri peaks.",
   image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   duration: "3N 2D",
   difficulty: "Moderate",
@@ -71,12 +71,12 @@ const sampleTrek = {
   maxGroupSize: 15,
   seatsRemaining: 5,
   bestTimeToVisit: "October to March, May to June",
-  inclusions: [
+    inclusions: [
     "Professional trek guide",
-    "All meals during trek",
+    "All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch",
     "First aid support",
     "Safety equipment",
-    "Transportation from base camp",
+  "Transportation from Delhi to Delhi by AC tempo traveller",
     "Accommodation in tents"
   ],
   exclusions: [
@@ -115,6 +115,14 @@ interface FormData {
   trekChoice: string;
   participants: number;
   message: string;
+}
+
+interface FormErrors {
+  firstName?: string;
+  email?: string;
+  phone?: string;
+  trekChoice?: string;
+  participants?: string;
 }
 
 const TrekDetailPage: React.FC = () => {
@@ -159,6 +167,33 @@ const TrekDetailPage: React.FC = () => {
     message: ''
   });
 
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+
+  const validateEmail = (value: string) => {
+    // simple email regex
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const validatePhone = (value: string) => {
+    // allow digits, +, spaces, -, () and ensure min 7 digits
+    const digits = value.replace(/[^0-9]/g, '');
+    return digits.length >= 7 && digits.length <= 15;
+  };
+
+  const validateForm = React.useCallback((): { valid: boolean; errors: FormErrors } => {
+    const errors: FormErrors = {};
+    if (!formData.firstName.trim()) errors.firstName = 'First name is required.';
+    if (!formData.email.trim()) errors.email = 'Email is required.';
+    else if (!validateEmail(formData.email.trim())) errors.email = 'Enter a valid email address.';
+    if (!formData.phone.trim()) errors.phone = 'Phone number is required.';
+    else if (!validatePhone(formData.phone.trim())) errors.phone = 'Enter a valid phone number.';
+    if (!formData.trekChoice || formData.trekChoice.trim() === '') errors.trekChoice = 'Trek selection is required.';
+    if (!formData.participants || formData.participants < 1) errors.participants = 'Select number of participants.';
+
+    setFormErrors(errors);
+    return { valid: Object.keys(errors).length === 0, errors };
+  }, [formData.firstName, formData.email, formData.phone, formData.trekChoice, formData.participants]);
+
   // Check if this is the minimal layout page
   const isMinimalLayout = location.pathname === '/trek/2';
   const trek = sampleTrek; // In real app, you'd fetch this based on ID
@@ -172,6 +207,24 @@ const TrekDetailPage: React.FC = () => {
     }
   }, [trek]);
 
+  // Listen for programmatic requests to open the booking tab (from other components)
+  useEffect(() => {
+    const onOpen = () => {
+      setActiveTab('booking');
+      // small timeout to wait for DOM to update, then focus first input
+      setTimeout(() => {
+        const firstInput = document.querySelector('#booking-form input, #booking-form select, #booking-form textarea') as HTMLElement | null;
+        if (firstInput) firstInput.focus();
+        // Also scroll into view if Layout's handler didn't do it
+        const el = document.getElementById('tabpanel-booking');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    };
+
+    window.addEventListener('openBookingTab', onOpen);
+    return () => window.removeEventListener('openBookingTab', onOpen);
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -180,8 +233,32 @@ const TrekDetailPage: React.FC = () => {
     }));
   };
 
+  // Debounced real-time validation as user types
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      // run validation silently (setFormErrors) but don't block user
+      validateForm();
+    }, 400);
+    return () => clearTimeout(timer);
+    // only watch the fields we care about
+  }, [formData.firstName, formData.email, formData.phone, formData.participants, validateForm]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // run validation and focus first invalid field if any
+    const { valid, errors } = validateForm();
+    if (!valid) {
+      setSubmitStatus({ type: 'error', message: 'Please fix the errors in the form.' });
+      // focus first invalid field if present
+      const firstKey = Object.keys(errors)[0];
+      if (firstKey) {
+        // map error keys to element ids (they match)
+        const el = document.getElementById(firstKey) as HTMLElement | null;
+        if (el && typeof el.focus === 'function') el.focus();
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
 
@@ -286,7 +363,7 @@ const TrekDetailPage: React.FC = () => {
           
           <div className="pt-16">
             {/* Enhanced Hero Section for Minimal Layout */}
-            <div className="relative min-h-screen overflow-hidden">
+            <div className="relative min-h-screen overflow-visible">
               {/* Background Image with proper positioning and optimization */}
               <div className="absolute inset-0">
                 <img
@@ -417,7 +494,7 @@ const TrekDetailPage: React.FC = () => {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveTab('booking')}
-                        className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
+                        className="js-book-now bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
                       >
                         <span>Book Now - ₹3,999</span>
                       </motion.button>
@@ -636,7 +713,7 @@ const TrekDetailPage: React.FC = () => {
                         onClick={() => setActiveTab('booking')}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
+                        className="js-book-now bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
                       >
                         Book This Trek - ₹3,999
                       </motion.button>
@@ -780,7 +857,7 @@ const TrekDetailPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3 bg-green-50 border border-green-200 rounded-lg p-4">
                           <span className="text-green-600 text-xl">✅</span>
-                          <span className="text-gray-800 font-medium">All vegetarian meals (Day 1 breakfast → Day 2 lunch)</span>
+                          <span className="text-gray-800 font-medium">All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch</span>
                         </div>
                         <div className="flex items-center space-x-3 bg-green-50 border border-green-200 rounded-lg p-4">
                           <span className="text-green-600 text-xl">✅</span>
@@ -1069,16 +1146,23 @@ const TrekDetailPage: React.FC = () => {
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  First Name *
+                                  First Name <span className="text-red-600">*</span>
                                 </label>
                                 <input
+                                  id="firstName"
                                   type="text"
                                   name="firstName"
                                   required
                                   value={formData.firstName}
                                   onChange={handleInputChange}
+                                  onBlur={() => { if (!formData.firstName.trim()) setFormErrors(prev => ({ ...prev, firstName: 'First name is required.' })); else setFormErrors(prev => { const p = { ...prev }; delete p.firstName; return p; }); }}
+                                  aria-invalid={!!formErrors.firstName}
+                                  aria-describedby={formErrors.firstName ? 'firstNameError' : undefined}
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                                 />
+                                {formErrors.firstName && (
+                                  <p id="firstNameError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.firstName}</p>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1097,64 +1181,102 @@ const TrekDetailPage: React.FC = () => {
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Email Address *
+                                  Email Address <span className="text-red-600">*</span>
                                 </label>
                                 <input
+                                  id="email"
                                   type="email"
                                   name="email"
                                   required
                                   value={formData.email}
                                   onChange={handleInputChange}
+                                  onBlur={() => {
+                                    if (!formData.email.trim()) setFormErrors(prev => ({ ...prev, email: 'Email is required.' }));
+                                    else if (!validateEmail(formData.email.trim())) setFormErrors(prev => ({ ...prev, email: 'Enter a valid email address.' }));
+                                    else setFormErrors(prev => { const p = { ...prev }; delete p.email; return p; });
+                                  }}
+                                  aria-invalid={!!formErrors.email}
+                                  aria-describedby={formErrors.email ? 'emailError' : undefined}
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                                 />
+                                {formErrors.email && (
+                                  <p id="emailError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.email}</p>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Phone Number *
+                                  Phone Number <span className="text-red-600">*</span>
                                 </label>
                                 <input
+                                  id="phone"
                                   type="tel"
                                   name="phone"
                                   required
                                   value={formData.phone}
                                   onChange={handleInputChange}
+                                  onBlur={() => {
+                                    if (!formData.phone.trim()) setFormErrors(prev => ({ ...prev, phone: 'Phone number is required.' }));
+                                    else if (!validatePhone(formData.phone.trim())) setFormErrors(prev => ({ ...prev, phone: 'Enter a valid phone number.' }));
+                                    else setFormErrors(prev => { const p = { ...prev }; delete p.phone; return p; });
+                                  }}
+                                  aria-invalid={!!formErrors.phone}
+                                  aria-describedby={formErrors.phone ? 'phoneError' : undefined}
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                                 />
+                                {formErrors.phone && (
+                                  <p id="phoneError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.phone}</p>
+                                )}
                               </div>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Trek Choice *
+                                  Trek Choice <span className="text-red-600">*</span>
                                 </label>
+                                {/* Make trek selector fixed and uneditable - show disabled select for UX but include hidden input with value for form submission */}
                                 <select
-                                  name="trekChoice"
-                                  required
-                                  value={formData.trekChoice}
-                                  onChange={handleInputChange}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                                  id="trekChoice"
+                                  name="trekChoiceDisabled"
+                                  disabled
+                                  value={trek.title}
+                                  className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
+                                  aria-disabled="true"
+                                  aria-invalid={!!formErrors.trekChoice}
+                                  aria-describedby={formErrors.trekChoice ? 'trekChoiceError' : undefined}
                                 >
-                                  <option value="">Select Trek</option>
                                   <option value={trek.title}>{trek.title}</option>
-                                  <option value="Nag Tibba, Dehradun - 1N/2D">Nag Tibba, Dehradun - 1N/2D</option>
                                 </select>
+                                <input type="hidden" name="trekChoice" value={trek.title} />
+                                {formErrors.trekChoice && (
+                                  <p id="trekChoiceError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.trekChoice}</p>
+                                )}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Number of Participants *
+                                  Number of Participants <span className="text-red-600">*</span>
                                 </label>
                                 <select
+                                  id="participants"
                                   name="participants"
                                   required
                                   value={formData.participants}
                                   onChange={handleInputChange}
+                                  onBlur={() => {
+                                    if (!formData.participants || formData.participants < 1) setFormErrors(prev => ({ ...prev, participants: 'Select number of participants.' }));
+                                    else setFormErrors(prev => { const p = { ...prev }; delete p.participants; return p; });
+                                  }}
+                                  aria-invalid={!!formErrors.participants}
+                                  aria-describedby={formErrors.participants ? 'participantsError' : undefined}
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                                >
+                                 >
                                   {Array.from({ length: trek.maxGroupSize }, (_, i) => (
                                     <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'person' : 'people'}</option>
                                   ))}
                                 </select>
+                                {formErrors.participants && (
+                                  <p id="participantsError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.participants}</p>
+                                )}
                               </div>
                             </div>
 

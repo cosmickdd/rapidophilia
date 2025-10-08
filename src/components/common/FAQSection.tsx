@@ -26,7 +26,7 @@ const faqData: FAQItem[] = [
   {
     id: 4,
     question: "What meals are included in the trek?",
-    answer: "All vegetarian meals are included from Day 1 breakfast to Day 2 lunch. We serve fresh, nutritious food prepared by experienced cooks, along with evening tea and snacks at base camp."
+    answer: "All meals and evening snacks are provided: from Day 1 (Friday) Dinner through Day 3 (Sunday) Lunch. We serve fresh, vegetarian meals prepared by experienced cooks, plus evening tea & snacks at base camp."
   },
   {
     id: 5,
@@ -344,6 +344,22 @@ const FAQSection: React.FC = () => {
           </div>
         </div>
 
+        {/* Book Now button above the CTA */}
+        <div className="text-center mb-20 lg:mb-28">
+          <button
+            onClick={() => {
+              const el = document.getElementById('tabpanel-booking');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              window.dispatchEvent(new CustomEvent('openBookingTab'));
+            }}
+            className="js-book-now inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            Book Now
+          </button>
+          {/* explicit spacer to prevent visual overlap with the CTA card */}
+          <div className="h-6 lg:h-10" aria-hidden="true" />
+        </div>
+
         {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -364,6 +380,7 @@ const FAQSection: React.FC = () => {
               <p className="text-gray-600 mb-8 lg:mb-10 leading-relaxed text-lg lg:text-xl font-light max-w-2xl mx-auto">
                 Our trekking experts are here to help you plan the perfect adventure. Get in touch with us for personalized assistance.
               </p>
+              {/* Book Now button moved above this CTA box */}
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center">
                 <a
                   href="tel:+919911192050"

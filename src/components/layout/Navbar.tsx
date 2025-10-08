@@ -47,7 +47,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <motion.nav
+    <motion.nav id="site-navbar"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -156,7 +156,7 @@ const Navbar: React.FC = () => {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to="/trek"
-                className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                className={`js-book-now px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
                   isScrolled 
                     ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700' 
                     : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700'
@@ -248,7 +248,7 @@ const Navbar: React.FC = () => {
                 <div className="px-4 pt-4">
                   <Link
                     to="/trek"
-                    className="btn-primary w-full text-center"
+                    className="js-book-now btn-primary w-full text-center"
                     onClick={() => setIsOpen(false)}
                   >
                     Book Now
