@@ -19,7 +19,7 @@ export const validateField = (trekMaxParticipants: number | undefined) => (name:
       if (!isValidPhone(String(value))) return 'Enter a valid phone number (digits only, include country code if applicable).';
       return '';
     case 'trekChoice':
-      if (!value) return 'Please select a trek.';
+      // trekChoice is optional now (preselected on the trek page). Do not require it.
       return '';
     case 'participants':
       if (!value || Number(value) < 1) return 'Please select the number of participants.';

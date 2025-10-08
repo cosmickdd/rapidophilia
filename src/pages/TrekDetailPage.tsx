@@ -1087,12 +1087,12 @@ const TrekDetailPage: React.FC = () => {
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Trek Choice <span className="text-red-600">*</span>
+                                  Trek Choice
                                 </label>
                                 {/* Trek choice is preselected and not editable per request */}
                                 <div className="w-full px-4 py-3 border rounded-lg bg-gray-50 text-gray-700">{trek.title}</div>
                                 <input type="hidden" name="trekChoice" value={trek.title} />
-                                {errors.trekChoice && <p id="trekChoice-error" className="mt-1 text-sm text-red-600">{errors.trekChoice}</p>}
+                                {/* trekChoice is optional; no inline error shown */}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
