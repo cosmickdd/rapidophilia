@@ -47,7 +47,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <motion.nav id="site-navbar"
+    <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -154,16 +154,29 @@ const Navbar: React.FC = () => {
 
             {/* CTA Button */}
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/trek"
-                className={`js-book-now px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+              <a
+                onClick={(e) => {
+                  e.preventDefault();
+                  // try smooth scroll first
+                  const el = document.getElementById('booking');
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  } else {
+                    // fallback: navigate to trek page and dispatch event so page can scroll on mount
+                    window.location.href = '/trek/2';
+                  }
+                  // notify other listeners
+                  window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+                }}
+                href="/trek"
+                className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
                   isScrolled 
                     ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700' 
                     : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700'
-                }`}
+                } flex items-center gap-2`}
               >
-                Book Now
-              </Link>
+                <span className="">Book Now</span>
+              </a>
             </motion.div>
           </div>
 
@@ -248,7 +261,7 @@ const Navbar: React.FC = () => {
                 <div className="px-4 pt-4">
                   <Link
                     to="/trek"
-                    className="js-book-now btn-primary w-full text-center"
+                    className="btn-primary w-full text-center"
                     onClick={() => setIsOpen(false)}
                   >
                     Book Now

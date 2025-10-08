@@ -26,7 +26,7 @@ const faqData: FAQItem[] = [
   {
     id: 4,
     question: "What meals are included in the trek?",
-    answer: "All meals and evening snacks are provided: from Day 1 (Friday) Dinner through Day 3 (Sunday) Lunch. We serve fresh, vegetarian meals prepared by experienced cooks, plus evening tea & snacks at base camp."
+    answer: "Meals are provided from Day 1 (Friday dinner) through Day 3 (Sunday lunch). Expect fresh, wholesome vegetarian meals—breakfasts, packed lunches, hot dinners—and evening tea & snacks prepared by our experienced camp cooks. If you have dietary restrictions, let us know in advance and we'll do our best to accommodate them."
   },
   {
     id: 5,
@@ -344,22 +344,6 @@ const FAQSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Book Now button above the CTA */}
-        <div className="text-center mb-20 lg:mb-28">
-          <button
-            onClick={() => {
-              const el = document.getElementById('tabpanel-booking');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              window.dispatchEvent(new CustomEvent('openBookingTab'));
-            }}
-            className="js-book-now inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-          >
-            Book Now
-          </button>
-          {/* explicit spacer to prevent visual overlap with the CTA card */}
-          <div className="h-6 lg:h-10" aria-hidden="true" />
-        </div>
-
         {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -374,13 +358,26 @@ const FAQSection: React.FC = () => {
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-cyan-200 to-transparent rounded-full opacity-20 translate-y-12 -translate-x-12"></div>
             
             <div className="relative z-10">
+              <div className="mb-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // try smooth scroll then dispatch event for pages that listen
+                    const el = document.getElementById('booking') || document.getElementById('tabpanel-booking');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+                  }}
+                  className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-full hover:bg-purple-700 transition"
+                >
+                  Book Now
+                </button>
+              </div>
               <h3 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-4 lg:mb-6">
                 Still have questions?
               </h3>
               <p className="text-gray-600 mb-8 lg:mb-10 leading-relaxed text-lg lg:text-xl font-light max-w-2xl mx-auto">
                 Our trekking experts are here to help you plan the perfect adventure. Get in touch with us for personalized assistance.
               </p>
-              {/* Book Now button moved above this CTA box */}
               <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center">
                 <a
                   href="tel:+919911192050"

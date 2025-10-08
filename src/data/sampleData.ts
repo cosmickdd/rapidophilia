@@ -11,7 +11,7 @@ export const featuredTreks: Trek[] = [
     price: 1299,
     difficulty: 'Easy',
     image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    gallery: [],
+  gallery: [],
     inclusions: ['Accommodation', 'Meals', 'Local Guide', 'Forest Permits'],
     exclusions: ['Transportation to Kasol', 'Personal expenses', 'Hot spring entry fee'],
     itinerary: [
@@ -52,7 +52,7 @@ export const featuredTreks: Trek[] = [
     difficulty: 'Moderate',
     image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
     gallery: [],
-  inclusions: ['Accommodation', 'All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch', 'Certified Guide', 'Forest Permits'],
+    inclusions: ['Accommodation', 'All Meals', 'Certified Guide', 'Forest Permits'],
     exclusions: ['Transportation to base', 'Personal gear', 'Insurance'],
     itinerary: [
       {
@@ -91,7 +91,7 @@ export const featuredTreks: Trek[] = [
     difficulty: 'Challenging',
     image: 'https://images.unsplash.com/photo-1464207687429-7505649dae38?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
     gallery: [],
-  inclusions: ['All Accommodation', 'All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch', 'Certified Guide', 'Permits & Fees', 'Transportation'],
+    inclusions: ['All Accommodation', 'All Meals', 'Certified Guide', 'Permits & Fees', 'Transportation'],
     exclusions: ['Personal trekking gear', 'Travel insurance', 'Personal expenses'],
     itinerary: [
       {
@@ -266,7 +266,7 @@ export const featuredAdventures: Adventure[] = [
     difficulty: 'Moderate',
     image: 'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
     gallery: [],
-  inclusions: ['Jungle lodge accommodation', 'All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch', 'Expert naturalist guide', 'Boat transportation', 'Wildlife viewing equipment'],
+    inclusions: ['Jungle lodge accommodation', 'All meals', 'Expert naturalist guide', 'Boat transportation', 'Wildlife viewing equipment'],
     exclusions: ['International flights', 'Travel insurance', 'Alcoholic beverages', 'Personal expenses'],
     equipment: ['Lightweight clothing', 'Rain poncho', 'Insect repellent', 'Binoculars', 'Waterproof bags'],
     highlights: [

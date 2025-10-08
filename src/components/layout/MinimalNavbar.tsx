@@ -18,7 +18,7 @@ const MinimalNavbar: React.FC<MinimalNavbarProps> = ({ onBookNowClick }) => {
   }, []);
 
   return (
-    <motion.nav id="site-navbar-min"
+    <motion.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className="fixed top-0 left-0 right-0 z-50 bg-white shadow-lg border-b border-gray-200 transition-all duration-300"
@@ -48,10 +48,22 @@ const MinimalNavbar: React.FC<MinimalNavbarProps> = ({ onBookNowClick }) => {
           {/* Enhanced Book Now Button */}
           <div className="flex items-center space-x-3 sm:space-x-4">
             <motion.button
-              onClick={onBookNowClick}
+              onClick={() => {
+                // existing callback for legacy pages
+                onBookNowClick();
+
+                // smooth scroll to #booking if present
+                const el = document.getElementById('booking');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                // dispatch an event so other pages can listen
+                window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+              }}
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              className="js-book-now relative overflow-hidden px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+              className="relative overflow-hidden px-4 sm:px-6 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 flex items-center gap-2"
             >
               <span className="relative z-10">Book Now</span>
             </motion.button>

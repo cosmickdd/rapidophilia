@@ -8,8 +8,10 @@ import Button from '../components/common/Button';
 import Section from '../components/common/Section';
 import PriceOfferTimer from '../components/common/PriceOfferTimer';
 import FAQSection from '../components/common/FAQSection';
+import GalleryGrid from '../components/common/GalleryGrid';
 import { sendBookingEmail } from '../utils/emailService';
 import { initializeRazorpayPayment } from '../utils/razorpayService';
+import { validateForm as utilValidateForm, validateField as utilValidateField } from '../utils/validation';
 
 // Icon Components
 const StarIcon = ({ className, filled }: { className?: string; filled?: boolean }) => (
@@ -66,14 +68,14 @@ const sampleTrek = {
   difficulty: "Moderate",
   location: "Dehradun, Uttarakhand",
   price: 3999,
-  originalPrice: 5000,
+  originalPrice: 5700,
   rating: 4.8,
   maxGroupSize: 15,
   seatsRemaining: 5,
   bestTimeToVisit: "October to March, May to June",
-    inclusions: [
+  inclusions: [
     "Professional trek guide",
-    "All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch",
+    "All meals during trek",
     "First aid support",
     "Safety equipment",
   "Transportation from Delhi to Delhi by AC tempo traveller",
@@ -115,14 +117,6 @@ interface FormData {
   trekChoice: string;
   participants: number;
   message: string;
-}
-
-interface FormErrors {
-  firstName?: string;
-  email?: string;
-  phone?: string;
-  trekChoice?: string;
-  participants?: string;
 }
 
 const TrekDetailPage: React.FC = () => {
@@ -167,33 +161,6 @@ const TrekDetailPage: React.FC = () => {
     message: ''
   });
 
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-
-  const validateEmail = (value: string) => {
-    // simple email regex
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
-
-  const validatePhone = (value: string) => {
-    // allow digits, +, spaces, -, () and ensure min 7 digits
-    const digits = value.replace(/[^0-9]/g, '');
-    return digits.length >= 7 && digits.length <= 15;
-  };
-
-  const validateForm = React.useCallback((): { valid: boolean; errors: FormErrors } => {
-    const errors: FormErrors = {};
-    if (!formData.firstName.trim()) errors.firstName = 'First name is required.';
-    if (!formData.email.trim()) errors.email = 'Email is required.';
-    else if (!validateEmail(formData.email.trim())) errors.email = 'Enter a valid email address.';
-    if (!formData.phone.trim()) errors.phone = 'Phone number is required.';
-    else if (!validatePhone(formData.phone.trim())) errors.phone = 'Enter a valid phone number.';
-    if (!formData.trekChoice || formData.trekChoice.trim() === '') errors.trekChoice = 'Trek selection is required.';
-    if (!formData.participants || formData.participants < 1) errors.participants = 'Select number of participants.';
-
-    setFormErrors(errors);
-    return { valid: Object.keys(errors).length === 0, errors };
-  }, [formData.firstName, formData.email, formData.phone, formData.trekChoice, formData.participants]);
-
   // Check if this is the minimal layout page
   const isMinimalLayout = location.pathname === '/trek/2';
   const trek = sampleTrek; // In real app, you'd fetch this based on ID
@@ -207,22 +174,18 @@ const TrekDetailPage: React.FC = () => {
     }
   }, [trek]);
 
-  // Listen for programmatic requests to open the booking tab (from other components)
+  // Listen for programmatic requests to scroll to booking (from Navbar or other components)
   useEffect(() => {
-    const onOpen = () => {
+    const handler = () => {
       setActiveTab('booking');
-      // small timeout to wait for DOM to update, then focus first input
       setTimeout(() => {
-        const firstInput = document.querySelector('#booking-form input, #booking-form select, #booking-form textarea') as HTMLElement | null;
-        if (firstInput) firstInput.focus();
-        // Also scroll into view if Layout's handler didn't do it
-        const el = document.getElementById('tabpanel-booking');
+        // try to find the booking tab panel or an element with id 'booking'
+        const el = document.getElementById('booking') || document.getElementById('tabpanel-booking');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 120);
+      }, 150);
     };
-
-    window.addEventListener('openBookingTab', onOpen);
-    return () => window.removeEventListener('openBookingTab', onOpen);
+    window.addEventListener('scroll-to-booking', handler as EventListener);
+    return () => window.removeEventListener('scroll-to-booking', handler as EventListener);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -233,32 +196,49 @@ const TrekDetailPage: React.FC = () => {
     }));
   };
 
-  // Debounced real-time validation as user types
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      // run validation silently (setFormErrors) but don't block user
-      validateForm();
-    }, 400);
-    return () => clearTimeout(timer);
-    // only watch the fields we care about
-  }, [formData.firstName, formData.email, formData.phone, formData.participants, validateForm]);
+  // Form validation state and helpers
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateField = React.useCallback((name: string, value: any) => {
+    const vf = utilValidateField(trek?.maxGroupSize);
+    return vf(name, value);
+  }, [trek]);
+
+  const validateForm = React.useCallback(() => utilValidateForm(formData, trek?.maxGroupSize), [formData, trek]);
+
+  // Clear field error on change
+  const handleValidatedInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    // reuse existing setter
+    handleInputChange(e);
+    setErrors(prev => {
+      const next = { ...prev } as Record<string, string>;
+      const err = validateField(name, name === 'participants' ? parseInt(value as string) : value);
+      if (err) next[name] = err; else delete next[name];
+      return next;
+    });
+  };
+
+  // Recompute overall form validity whenever formData or errors change
+  useEffect(() => {
+    const newErrors = validateForm();
+    setErrors(prev => ({ ...prev, ...newErrors }));
+    // keep inline errors updated
+  }, [formData, validateForm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // run validation and focus first invalid field if any
-    const { valid, errors } = validateForm();
-    if (!valid) {
-      setSubmitStatus({ type: 'error', message: 'Please fix the errors in the form.' });
-      // focus first invalid field if present
-      const firstKey = Object.keys(errors)[0];
-      if (firstKey) {
-        // map error keys to element ids (they match)
-        const el = document.getElementById(firstKey) as HTMLElement | null;
-        if (el && typeof el.focus === 'function') el.focus();
-      }
+    // Validate form before submitting
+    const currentErrors = validateForm();
+    setErrors(currentErrors);
+    if (Object.keys(currentErrors).length > 0) {
+      // Focus first invalid field
+      const firstKey = Object.keys(currentErrors)[0];
+      const field = document.querySelector(`[name="${firstKey}"]`) as HTMLElement | null;
+      if (field && typeof field.focus === 'function') field.focus();
+      setSubmitStatus({ type: 'error', message: 'Please correct the highlighted fields and try again.' });
       return;
     }
-
     setIsSubmitting(true);
     setSubmitStatus({ type: null, message: '' });
 
@@ -363,7 +343,7 @@ const TrekDetailPage: React.FC = () => {
           
           <div className="pt-16">
             {/* Enhanced Hero Section for Minimal Layout */}
-            <div className="relative min-h-screen overflow-visible">
+            <div className="relative min-h-screen overflow-hidden">
               {/* Background Image with proper positioning and optimization */}
               <div className="absolute inset-0">
                 <img
@@ -412,7 +392,7 @@ const TrekDetailPage: React.FC = () => {
                     </div>
                     
                     <PriceOfferTimer 
-                      originalPrice={5000}
+                      originalPrice={5700}
                       discountedPrice={3999}
                       compact
                       onDismiss={handleTimerDismiss}
@@ -481,8 +461,8 @@ const TrekDetailPage: React.FC = () => {
                       <div className="bg-black/30 backdrop-blur-lg rounded-2xl sm:rounded-3xl px-6 sm:px-8 py-6 sm:py-8 border border-white/30 shadow-2xl mx-4">
                         <div className="text-center">
                           <div className="flex items-center justify-center space-x-4 mb-3">
-                            <span className="text-lg sm:text-2xl text-gray-300 line-through">₹5,000</span>
-                            <span className="bg-green-500 text-white text-sm sm:text-base font-bold px-3 py-2 rounded-full animate-pulse">20% OFF</span>
+                            <span className="text-lg sm:text-2xl text-gray-300 line-through">₹{(5700).toLocaleString()}</span>
+                            <span className="bg-green-500 text-white text-sm sm:text-base font-bold px-3 py-2 rounded-full animate-pulse">30% OFF</span>
                           </div>
                           <div className="text-4xl sm:text-5xl lg:text-6xl font-black text-yellow-400 mb-2">₹3,999</div>
                           <div className="text-base sm:text-lg text-gray-200">per person</div>
@@ -494,7 +474,7 @@ const TrekDetailPage: React.FC = () => {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveTab('booking')}
-                        className="js-book-now bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
+                        className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
                       >
                         <span>Book Now - ₹3,999</span>
                       </motion.button>
@@ -647,7 +627,7 @@ const TrekDetailPage: React.FC = () => {
                     {/* Enhanced Price Offer Timer */}
                     <div className="mb-6 sm:mb-8">
                       <PriceOfferTimer 
-                        originalPrice={5000}
+                        originalPrice={5700}
                         discountedPrice={3999}
                       />
                     </div>
@@ -713,7 +693,7 @@ const TrekDetailPage: React.FC = () => {
                         onClick={() => setActiveTab('booking')}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="js-book-now bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:shadow-xl"
                       >
                         Book This Trek - ₹3,999
                       </motion.button>
@@ -857,7 +837,7 @@ const TrekDetailPage: React.FC = () => {
                         </div>
                         <div className="flex items-center space-x-3 bg-green-50 border border-green-200 rounded-lg p-4">
                           <span className="text-green-600 text-xl">✅</span>
-                          <span className="text-gray-800 font-medium">All meals and evening snacks provided: Day 1 (Friday) Dinner → Day 3 (Sunday) Lunch</span>
+                          <span className="text-gray-800 font-medium">All vegetarian meals (Day 1 breakfast → Day 2 lunch)</span>
                         </div>
                         <div className="flex items-center space-x-3 bg-green-50 border border-green-200 rounded-lg p-4">
                           <span className="text-green-600 text-xl">✅</span>
@@ -913,120 +893,12 @@ const TrekDetailPage: React.FC = () => {
 
                     {/* Categorized Photo Gallery */}
                     <div className="mb-6">
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-6">Photo Gallery</h3>
-                      
-                      {/* Seasonal Photos */}
-                      <div className="mb-8">
-                        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                          Seasonal Views
-                        </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          <div className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                            <img
-                              src={`${trek.image}?season=winter`}
-                              alt="Winter trek view"
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              onError={(e) => { e.currentTarget.src = trek.image; }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                            <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
-                              <span className="text-xs font-medium text-gray-800">Winter</span>
-                            </div>
-                          </div>
-                          <div className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                            <img
-                              src={`${trek.image}?season=monsoon`}
-                              alt="Monsoon trek view"
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              onError={(e) => { e.currentTarget.src = trek.image; }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                            <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
-                              <span className="text-xs font-medium text-gray-800">Monsoon</span>
-                            </div>
-                          </div>
-                          <div className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                            <img
-                              src={`${trek.image}?season=summer`}
-                              alt="Summer trek view"
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              onError={(e) => { e.currentTarget.src = trek.image; }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                            <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
-                              <span className="text-xs font-medium text-gray-800">Summer</span>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="text-center max-w-3xl mx-auto">
+                        <h2 id="gallery-heading" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Photo Gallery</h2>
+                        <p className="text-gray-600 mb-4">A curated visual tour of Nag Tibba. Click thumbnails to open the viewer.</p>
                       </div>
-
-                      {/* Experience Photos */}
                       <div className="mb-8">
-                        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          Trek Experience
-                        </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                          {[
-                            { name: 'Base Camp', category: 'base-camp' },
-                            { name: 'Summit', category: 'destination' },
-                            { name: 'Stay', category: 'stay' },
-                            { name: 'Transport', category: 'transportation' }
-                          ].map((item, index) => (
-                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                              <img
-                                src={`${trek.image}?experience=${item.category}`}
-                                alt={`${item.name} experience`}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                onError={(e) => { e.currentTarget.src = trek.image; }}
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                              <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
-                                <span className="text-xs font-medium text-gray-800">{item.name}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Main Featured Gallery */}
-                      <div>
-                        <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                          <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                          Featured Highlights
-                        </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {/* Main featured image */}
-                          <div className="col-span-2 row-span-2">
-                            <div className="relative h-48 sm:h-64 lg:h-80 rounded-lg overflow-hidden group cursor-pointer">
-                              <img
-                                src={trek.image}
-                                alt={`${trek.title} main view`}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                              <div className="absolute top-2 left-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg px-2 py-1">
-                                <span className="text-xs font-bold">Featured</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Additional gallery images */}
-                          {[1, 2, 3, 4, 5, 6].map((index) => (
-                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
-                              <img
-                                src={`${trek.image}?variant=${index}`}
-                                alt={`${trek.title} view ${index}`}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                onError={(e) => {
-                                  e.currentTarget.src = trek.image;
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
-                            </div>
-                          ))}
-                        </div>
+                        <GalleryGrid />
                       </div>
                     </div>
                   </motion.div>
@@ -1126,6 +998,7 @@ const TrekDetailPage: React.FC = () => {
                                   ? 'bg-green-50 border border-green-200 text-green-800' 
                                   : 'bg-red-50 border border-red-200 text-red-800'
                               }`}
+                              role="alert"
                             >
                               <div className="flex items-center">
                                 {submitStatus.type === 'success' ? (
@@ -1149,19 +1022,17 @@ const TrekDetailPage: React.FC = () => {
                                   First Name <span className="text-red-600">*</span>
                                 </label>
                                 <input
-                                  id="firstName"
                                   type="text"
                                   name="firstName"
                                   required
                                   value={formData.firstName}
-                                  onChange={handleInputChange}
-                                  onBlur={() => { if (!formData.firstName.trim()) setFormErrors(prev => ({ ...prev, firstName: 'First name is required.' })); else setFormErrors(prev => { const p = { ...prev }; delete p.firstName; return p; }); }}
-                                  aria-invalid={!!formErrors.firstName}
-                                  aria-describedby={formErrors.firstName ? 'firstNameError' : undefined}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                                  onChange={handleValidatedInputChange}
+                                  aria-invalid={!!errors.firstName}
+                                  aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+                                  className={`w-full px-4 py-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500 ${errors.firstName ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                 />
-                                {formErrors.firstName && (
-                                  <p id="firstNameError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.firstName}</p>
+                                {errors.firstName && (
+                                  <p id="firstName-error" className="mt-1 text-sm text-red-600">{errors.firstName}</p>
                                 )}
                               </div>
                               <div>
@@ -1172,7 +1043,7 @@ const TrekDetailPage: React.FC = () => {
                                   type="text"
                                   name="lastName"
                                   value={formData.lastName}
-                                  onChange={handleInputChange}
+                                  onChange={handleValidatedInputChange}
                                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
                                 />
                               </div>
@@ -1184,48 +1055,32 @@ const TrekDetailPage: React.FC = () => {
                                   Email Address <span className="text-red-600">*</span>
                                 </label>
                                 <input
-                                  id="email"
                                   type="email"
                                   name="email"
                                   required
                                   value={formData.email}
-                                  onChange={handleInputChange}
-                                  onBlur={() => {
-                                    if (!formData.email.trim()) setFormErrors(prev => ({ ...prev, email: 'Email is required.' }));
-                                    else if (!validateEmail(formData.email.trim())) setFormErrors(prev => ({ ...prev, email: 'Enter a valid email address.' }));
-                                    else setFormErrors(prev => { const p = { ...prev }; delete p.email; return p; });
-                                  }}
-                                  aria-invalid={!!formErrors.email}
-                                  aria-describedby={formErrors.email ? 'emailError' : undefined}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                                  onChange={handleValidatedInputChange}
+                                  aria-invalid={!!errors.email}
+                                  aria-describedby={errors.email ? 'email-error' : undefined}
+                                  className={`w-full px-4 py-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500 ${errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                 />
-                                {formErrors.email && (
-                                  <p id="emailError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.email}</p>
-                                )}
+                                {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600">{errors.email}</p>}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Phone Number <span className="text-red-600">*</span>
                                 </label>
                                 <input
-                                  id="phone"
                                   type="tel"
                                   name="phone"
                                   required
                                   value={formData.phone}
-                                  onChange={handleInputChange}
-                                  onBlur={() => {
-                                    if (!formData.phone.trim()) setFormErrors(prev => ({ ...prev, phone: 'Phone number is required.' }));
-                                    else if (!validatePhone(formData.phone.trim())) setFormErrors(prev => ({ ...prev, phone: 'Enter a valid phone number.' }));
-                                    else setFormErrors(prev => { const p = { ...prev }; delete p.phone; return p; });
-                                  }}
-                                  aria-invalid={!!formErrors.phone}
-                                  aria-describedby={formErrors.phone ? 'phoneError' : undefined}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                                  onChange={handleValidatedInputChange}
+                                  aria-invalid={!!errors.phone}
+                                  aria-describedby={errors.phone ? 'phone-error' : undefined}
+                                  className={`w-full px-4 py-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500 ${errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                 />
-                                {formErrors.phone && (
-                                  <p id="phoneError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.phone}</p>
-                                )}
+                                {errors.phone && <p id="phone-error" className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                               </div>
                             </div>
 
@@ -1234,49 +1089,29 @@ const TrekDetailPage: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Trek Choice <span className="text-red-600">*</span>
                                 </label>
-                                {/* Make trek selector fixed and uneditable - show disabled select for UX but include hidden input with value for form submission */}
-                                <select
-                                  id="trekChoice"
-                                  name="trekChoiceDisabled"
-                                  disabled
-                                  value={trek.title}
-                                  className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed"
-                                  aria-disabled="true"
-                                  aria-invalid={!!formErrors.trekChoice}
-                                  aria-describedby={formErrors.trekChoice ? 'trekChoiceError' : undefined}
-                                >
-                                  <option value={trek.title}>{trek.title}</option>
-                                </select>
+                                {/* Trek choice is preselected and not editable per request */}
+                                <div className="w-full px-4 py-3 border rounded-lg bg-gray-50 text-gray-700">{trek.title}</div>
                                 <input type="hidden" name="trekChoice" value={trek.title} />
-                                {formErrors.trekChoice && (
-                                  <p id="trekChoiceError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.trekChoice}</p>
-                                )}
+                                {errors.trekChoice && <p id="trekChoice-error" className="mt-1 text-sm text-red-600">{errors.trekChoice}</p>}
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                   Number of Participants <span className="text-red-600">*</span>
                                 </label>
                                 <select
-                                  id="participants"
                                   name="participants"
                                   required
                                   value={formData.participants}
-                                  onChange={handleInputChange}
-                                  onBlur={() => {
-                                    if (!formData.participants || formData.participants < 1) setFormErrors(prev => ({ ...prev, participants: 'Select number of participants.' }));
-                                    else setFormErrors(prev => { const p = { ...prev }; delete p.participants; return p; });
-                                  }}
-                                  aria-invalid={!!formErrors.participants}
-                                  aria-describedby={formErrors.participants ? 'participantsError' : undefined}
-                                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                                 >
+                                  onChange={handleValidatedInputChange}
+                                  aria-invalid={!!errors.participants}
+                                  aria-describedby={errors.participants ? 'participants-error' : undefined}
+                                  className={`w-full px-4 py-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500 ${errors.participants ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                                >
                                   {Array.from({ length: trek.maxGroupSize }, (_, i) => (
                                     <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'person' : 'people'}</option>
                                   ))}
                                 </select>
-                                {formErrors.participants && (
-                                  <p id="participantsError" role="alert" className="text-red-600 text-sm mt-2">{formErrors.participants}</p>
-                                )}
+                                {errors.participants && <p id="participants-error" className="mt-1 text-sm text-red-600">{errors.participants}</p>}
                               </div>
                             </div>
 
@@ -1288,10 +1123,13 @@ const TrekDetailPage: React.FC = () => {
                                 name="message"
                                 rows={4}
                                 value={formData.message}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                                onChange={handleValidatedInputChange}
+                                aria-invalid={!!errors.message}
+                                aria-describedby={errors.message ? 'message-error' : undefined}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-purple-500 focus:border-purple-500 ${errors.message ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                 placeholder="Any special requirements or questions..."
                               />
+                              {errors.message && <p id="message-error" className="mt-1 text-sm text-red-600">{errors.message}</p>}
                             </div>
 
                             <Button 
@@ -1299,7 +1137,7 @@ const TrekDetailPage: React.FC = () => {
                               variant="primary" 
                               size="lg" 
                               className="w-full"
-                              disabled={isSubmitting}
+                              disabled={isSubmitting || Object.keys(errors).length > 0}
                             >
                               {isSubmitting ? (
                                 <div className="flex items-center justify-center">
@@ -1321,7 +1159,7 @@ const TrekDetailPage: React.FC = () => {
                       <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
                         {/* Price Offer Timer */}
                         <PriceOfferTimer 
-                          originalPrice={5000}
+                          originalPrice={5700}
                           discountedPrice={3999}
                         />
 
@@ -1386,13 +1224,13 @@ const TrekDetailPage: React.FC = () => {
                                 <span className="text-gray-600">Price per person</span>
                                 <div className="text-right">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-gray-400 text-sm line-through">₹5,000</span>
+                                    <span className="text-gray-400 text-sm line-through">₹5,700</span>
                                     <span className="font-bold text-green-600">₹3,999</span>
                                   </div>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">20% OFF</span>
+                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">30% OFF</span>
                               </div>
                             </div>
 
@@ -1406,7 +1244,7 @@ const TrekDetailPage: React.FC = () => {
                                     <p className="text-purple-200 text-xs">(₹3,999 × {formData.participants})</p>
                                   )}
                                   <p className="text-green-300 text-xs font-semibold mt-1">
-                                    Save ₹{((5000 - 3999) * formData.participants).toLocaleString()}
+                                    Save ₹{((5700 - 3999) * formData.participants).toLocaleString()}
                                   </p>
                                 </div>
                                 <div className="text-center">
