@@ -63,6 +63,22 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
     return nextThursday;
   };
 
+  // Format a readable string for the upcoming Thursday deadline (e.g. "Thu, Oct 9 · 12:00 PM")
+  const formatDeadlineLabel = (date: Date) => {
+    try {
+      return date.toLocaleString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      // Fallback
+      return date.toDateString() + ' 12:00 PM';
+    }
+  };
+
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date().getTime();
@@ -237,7 +253,7 @@ const PriceOfferTimer: React.FC<PriceOfferTimerProps> = ({
                   Registration Deadline
                 </h3>
                 <p className="text-xs sm:text-sm font-bold text-orange-600 leading-tight">
-                  Thursday 12:00 PM
+                  {formatDeadlineLabel(getNextThursdayDeadline())}
                 </p>
               </div>
             </div>

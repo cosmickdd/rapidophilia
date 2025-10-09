@@ -20,6 +20,7 @@ import {
   FiGlobe,
   FiInfo
 } from 'react-icons/fi';
+import CONTACT from '../config/contact';
 
 const AdventureDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -560,10 +561,10 @@ const AdventureDetailPage: React.FC = () => {
                     Have questions about this adventure? Our team is here to help!
                   </p>
                   <a 
-                    href="mailto:support@rapidophilia.com"
+                    href={`mailto:${CONTACT.email}`}
                     className="text-purple-600 hover:text-purple-700 font-medium text-sm"
                   >
-                    support@rapidophilia.com
+                    {CONTACT.email}
                   </a>
                 </div>
               </div>

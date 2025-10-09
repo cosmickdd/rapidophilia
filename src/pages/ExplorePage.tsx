@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import Layout from '../components/layout/Layout';
 import Section from '../components/common/Section';
 import Button from '../components/common/Button';
+import CONTACT from '../config/contact';
 
 const destinations = [
   {
@@ -121,13 +122,14 @@ const ExplorePage: React.FC = () => {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Contact Us</h2>
             <p className="text-gray-600 mb-6">
-              299 Street No 5, Satguru Enclave, Gurugram,<br />
-              Opp Maruti Gate No 1, IN 122015<br />
-              <span className="block mt-2"><span className="text-purple-600 mr-2">✉️</span> support@rapidophilia.com</span>
+              {CONTACT.address.split(',').map((line, i) => (
+                <span key={i} className={i < 2 ? 'block' : ''}>{line.trim()}{i < 2 && <br />}</span>
+              ))}
+              <span className="block mt-2"><span className="text-purple-600 mr-2">✉️</span> {CONTACT.email}</span>
             </p>
             <div className="flex items-center space-x-4 text-gray-700">
               <span className="text-purple-600">📞</span>
-              <span>+91 98765 43210</span>
+              <span>{CONTACT.phone}</span>
             </div>
           </div>
           <div>

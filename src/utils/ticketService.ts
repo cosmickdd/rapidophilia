@@ -1,5 +1,6 @@
 // Ticket Generation Service
 import QRCode from 'qrcode';
+import CONTACT from '../config/contact';
 
 export interface BookingData {
   firstName: string;
@@ -359,9 +360,9 @@ export const generateTicketHTML = (ticketData: TicketData): string => {
         
         <div class="contact-info">
             <h3>📞 Contact Information</h3>
-            <p><strong>Phone:</strong> +91 99111 92050</p>
-            <p><strong>Email:</strong> info@rapidophilia.com</p>
-            <p><strong>WhatsApp:</strong> +91 99111 92050</p>
+            <p><strong>Phone:</strong> ${CONTACT.phone}</p>
+            <p><strong>Email:</strong> ${CONTACT.email}</p>
+            <p><strong>Address:</strong> ${CONTACT.address}</p>
             <p>For any queries or support, feel free to contact us!</p>
         </div>
     </div>

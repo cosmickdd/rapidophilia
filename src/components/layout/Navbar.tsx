@@ -262,7 +262,13 @@ const Navbar: React.FC = () => {
                   <Link
                     to="/trek"
                     className="btn-primary w-full text-center"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      setIsOpen(false);
+                      // ensure mobile users are taken directly to booking form on trek page
+                      setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+                      }, 120);
+                    }}
                   >
                     Book Now
                   </Link>

@@ -10,6 +10,7 @@ import PriceOfferTimer from '../components/common/PriceOfferTimer';
 import FAQSection from '../components/common/FAQSection';
 import GalleryGrid from '../components/common/GalleryGrid';
 import { sendBookingEmail } from '../utils/emailService';
+import TripDatesCard from '../components/common/TripDatesCard';
 import { initializeRazorpayPayment } from '../utils/razorpayService';
 import { validateForm as utilValidateForm, validateField as utilValidateField } from '../utils/validation';
 
@@ -160,6 +161,8 @@ const TrekDetailPage: React.FC = () => {
     participants: 1,
     message: ''
   });
+
+  // Trip dates are computed and rendered inside TripDatesCard component (auto-updates nightly)
 
   // Check if this is the minimal layout page
   const isMinimalLayout = location.pathname === '/trek/2';
@@ -438,6 +441,8 @@ const TrekDetailPage: React.FC = () => {
                     <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-gray-200 mb-8 sm:mb-10 max-w-4xl mx-auto leading-relaxed font-light px-4">
                       Experience the breathtaking beauty of Nag Tibba, the highest peak in the lower Himalayas
                     </p>
+
+                    {/* ...hero content... (upcoming weekend label shown in Trip Dates card below) */}
                     
                     {/* Trek Details */}
                     <div className="flex justify-center flex-wrap items-center gap-4 sm:gap-6 mb-8 sm:mb-10 text-sm sm:text-base px-2">
@@ -479,6 +484,17 @@ const TrekDetailPage: React.FC = () => {
                         <span>Book Now - ₹3,999</span>
                       </motion.button>
                     </div>
+
+                    {/* Trip Dates Card (Hero) - shown only on /trek/2 minimal layout */}
+                    {isMinimalLayout && (
+                      <div className="mt-6 flex justify-center">
+                        <div className="w-full px-4">
+                          <TripDatesCard
+                            variant="hero"
+                          />
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Quick Features */}
                     <div className="mt-8 sm:mt-10 flex justify-center px-4">
@@ -711,7 +727,18 @@ const TrekDetailPage: React.FC = () => {
                     {/* Section Header */}
                     <div className="text-center mb-8">
                       <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Nag Tibba Trek – 2 Days / 1 Night</h2>
-                      <p className="text-purple-600 font-semibold text-lg">Every Weekend | Delhi to Delhi (Kashmere Gate Pickup & Drop)</p>
+                      <p className="text-purple-600 font-semibold text-lg">{(() => {
+                        const t = new Date();
+                        const dow = t.getDay();
+                        const daysUntilSat = ((6 - dow) + 7) % 7 || 7;
+                        const sat = new Date(t);
+                        sat.setDate(t.getDate() + daysUntilSat);
+                        const sun = new Date(sat);
+                        sun.setDate(sat.getDate() + 1);
+                        const short = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+                        const weekendLabel = `${short(sat)} – ${short(sun)}`;
+                        return `${weekendLabel} | Delhi to Delhi (Kashmere Gate Pickup & Drop)`;
+                      })()}</p>
                     </div>
 
                     {/* Quick Highlights Row */}
@@ -982,6 +1009,12 @@ const TrekDetailPage: React.FC = () => {
                     transition={{ duration: 0.6 }}
                     className="space-y-6"
                   >
+                    {/* Booking-top Trip Dates Card (full-width) - show only on /trek/2 */}
+                    {isMinimalLayout && (
+                      <div id="booking-top-dates">
+                        <TripDatesCard variant="booking" />
+                      </div>
+                    )}
                     <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
                       {/* Booking Form */}
                       <div className="lg:col-span-2 order-2 lg:order-1">
@@ -1186,6 +1219,17 @@ const TrekDetailPage: React.FC = () => {
                                 <span className="font-semibold text-gray-900 text-right text-sm max-w-[60%]">
                                   {trek.title.length > 35 ? `${trek.title.substring(0, 35)}...` : trek.title}
                                 </span>
+                                <span className="block text-xs text-gray-500 mt-1">Weekend: {(() => {
+                                  const t = new Date();
+                                  const dow = t.getDay();
+                                  const daysUntilSat = ((6 - dow) + 7) % 7 || 7;
+                                  const sat = new Date(t);
+                                  sat.setDate(t.getDate() + daysUntilSat);
+                                  const sun = new Date(sat);
+                                  sun.setDate(sat.getDate() + 1);
+                                  const short = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+                                  return `${short(sat)} – ${short(sun)}`;
+                                })()}</span>
                               </div>
                               
                               <div className="grid grid-cols-2 gap-3 text-sm">

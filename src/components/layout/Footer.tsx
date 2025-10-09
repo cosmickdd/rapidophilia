@@ -11,6 +11,7 @@ import {
   FiMapPin 
 } from 'react-icons/fi';
 import { TbMountain } from 'react-icons/tb';
+import CONTACT from '../../config/contact';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -39,9 +40,9 @@ const Footer: React.FC = () => {
   ];
 
   const contactInfo = [
-    { icon: FiPhone, text: '+91 99111 92050' },
-    { icon: FiMail, text: 'info@rapidophilia.com' },
-    { icon: FiMapPin, text: '123 Adventure Street, Mountain View, CA 94041' },
+    { icon: FiPhone, text: CONTACT.phone },
+    { icon: FiMail, text: CONTACT.email },
+    { icon: FiMapPin, text: CONTACT.address },
   ];
 
   return (

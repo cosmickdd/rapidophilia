@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Layout from '../components/layout/Layout';
 import Section from '../components/common/Section';
+import CONTACT from '../config/contact';
 
 const RefundPolicyPage: React.FC = () => {
   return (
@@ -93,7 +94,7 @@ const RefundPolicyPage: React.FC = () => {
               <div className="bg-gradient-to-r from-purple-600 to-violet-600 p-8 rounded-2xl text-white">
                 <h2 className="text-3xl font-bold mb-6">Complaints & Refund Requests Deadline</h2>
                 <p className="leading-relaxed text-lg">
-                  Any refund request (e.g., service denial, incomplete services) must be submitted with valid evidence (emails, logs, media, vendor confirmations) within 5 days of trip completion (write to <a href="mailto:rapidophilia@gmail.com" className="text-purple-200 hover:text-white font-medium underline">rapidophilia@gmail.com</a>). Beyond this timeframe, no requests will be entertained.
+                  Any refund request (e.g., service denial, incomplete services) must be submitted with valid evidence (emails, logs, media, vendor confirmations) within 5 days of trip completion (write to <a href={`mailto:${CONTACT.email}`} className="text-purple-200 hover:text-white font-medium underline">{CONTACT.email}</a>). Beyond this timeframe, no requests will be entertained.
                 </p>
               </div>
 

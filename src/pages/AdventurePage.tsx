@@ -14,6 +14,7 @@ import {
   FiStar,
   FiGlobe
 } from 'react-icons/fi';
+import CONTACT from '../config/contact';
 
 const AdventurePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,7 +377,7 @@ const AdventurePage: React.FC = () => {
                     </button>
                   </motion.div>
                 </Link>
-                <a href="mailto:support@rapidophilia.com">
+                <a href={`mailto:${CONTACT.email}`}>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -400,11 +401,11 @@ const AdventurePage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8 text-purple-100">
                   <div className="flex items-center space-x-2">
                     {FiMapPin({ className: "h-5 w-5" })}
-                    <span>299 Street No 5, Satguru Enclave, Gurugram</span>
+                    <span>{CONTACT.address}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>•</span>
-                    <span>support@rapidophilia.com</span>
+                    <span>{CONTACT.email}</span>
                   </div>
                 </div>
               </motion.div>

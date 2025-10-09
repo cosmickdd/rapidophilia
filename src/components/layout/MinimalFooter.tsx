@@ -1,5 +1,7 @@
 import React from 'react';
 
+import CONTACT from '../../config/contact';
+
 const MinimalFooter: React.FC = () => {
   return (
     <footer className="bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-white py-16">
@@ -37,7 +39,7 @@ const MinimalFooter: React.FC = () => {
                   </svg>
                 </div>
                 <p className="text-gray-400 text-sm mb-1">Email</p>
-                <p className="text-white font-medium">rapidophiliatravel@gmail.com</p>
+                <p className="text-white font-medium">{CONTACT.email}</p>
               </div>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
@@ -48,7 +50,7 @@ const MinimalFooter: React.FC = () => {
                   </svg>
                 </div>
                 <p className="text-gray-400 text-sm mb-1">Phone</p>
-                <p className="text-white font-medium">+91 99111 92050</p>
+                <p className="text-white font-medium">{CONTACT.phone}</p>
               </div>
             </div>
           </div>
