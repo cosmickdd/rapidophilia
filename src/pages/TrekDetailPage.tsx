@@ -182,12 +182,24 @@ const TrekDetailPage: React.FC = () => {
     const handler = () => {
       setActiveTab('booking');
       setTimeout(() => {
-        // try to find the booking tab panel or an element with id 'booking'
-        const el = document.getElementById('booking') || document.getElementById('tabpanel-booking');
+        // prefer the explicit booking form id
+        const el = document.getElementById('booking-form') || document.getElementById('booking') || document.getElementById('tabpanel-booking');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 150);
     };
+
+    // Listen for programmatic requests to scroll to booking (from Navbar or other components)
     window.addEventListener('scroll-to-booking', handler as EventListener);
+
+    // On mount, if URL contains fragment '#booking-form', scroll to it
+    if (window.location && window.location.hash === '#booking-form') {
+      setActiveTab('booking');
+      setTimeout(() => {
+        const el = document.getElementById('booking-form');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    }
+
     return () => window.removeEventListener('scroll-to-booking', handler as EventListener);
   }, []);
 
@@ -472,34 +484,25 @@ const TrekDetailPage: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setActiveTab('booking')}
+                        onClick={() => {
+                          setActiveTab('booking');
+                          setTimeout(() => {
+                            const el = document.getElementById('booking-form');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 120);
+                        }}
                         className="bg-gradient-to-r from-purple-600 via-purple-700 to-blue-600 hover:from-purple-700 hover:via-purple-800 hover:to-blue-700 text-white px-8 sm:px-12 py-4 sm:py-6 rounded-2xl font-bold text-lg sm:text-xl lg:text-2xl shadow-2xl border-2 border-white/20 backdrop-blur-sm transition-all duration-300 mx-4"
                       >
                         <span>Book Now - ₹3,999</span>
                       </motion.button>
                     </div>
 
-                    {/* Trip dates removed from hero as requested */}
-                    
-                    {/* Quick Features */}
-                    <div className="mt-8 sm:mt-10 flex justify-center px-4">
-                      <div className="bg-black/20 backdrop-blur-lg rounded-xl sm:rounded-2xl px-4 sm:px-8 py-3 sm:py-4 border border-white/20">
-                        <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 text-sm sm:text-base">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-green-400 text-lg">✓</span>
-                            <span className="font-semibold">Travel & Food</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-green-400 text-lg">✓</span>
-                            <span className="font-semibold">Stay</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-green-400 text-lg">✓</span>
-                            <span className="font-semibold">Guide</span>
-                          </div>
-                        </div>
-                      </div>
+                    {/* Trip dates (dynamic) - show next weekend Fri 9pm → Sun 9pm */}
+                    <div className="mt-6">
+                      <TripDatesCard variant="hero" />
                     </div>
+                    
+                    {/* Quick Features removed per request */}
                   </motion.div>
                 </div>
               </div>
@@ -869,7 +872,13 @@ const TrekDetailPage: React.FC = () => {
                     {/* Book Now Button */}
                     <div className="text-center">
                       <button
-                        onClick={() => setActiveTab('booking')}
+                        onClick={() => {
+                          setActiveTab('booking');
+                          setTimeout(() => {
+                            const el = document.getElementById('booking-form');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 120);
+                        }}
                         className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
                       >
                         Book Now - ₹3,999
@@ -1033,7 +1042,7 @@ const TrekDetailPage: React.FC = () => {
                             </motion.div>
                           )}
                           
-                          <form onSubmit={handleSubmit} className="space-y-6">
+                          <form id="booking-form" onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid md:grid-cols-2 gap-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1481,7 +1490,10 @@ const TrekDetailPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Trip dates removed from regular hero as requested */}
+                {/* Trip dates (dynamic) - show next weekend Fri 9pm → Sun 9pm */}
+                <div className="mt-4">
+                  <TripDatesCard variant="hero" />
+                </div>
 
                 {/* Book Now Button */}
                 <motion.div

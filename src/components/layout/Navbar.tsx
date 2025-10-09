@@ -66,12 +66,11 @@ const Navbar: React.FC = () => {
           <div className="hidden lg:flex items-center space-x-8">
             {/* Desktop: show only Book Now button that links to /trek/2 */}
             <a
-              href="/trek/2"
+              href="/trek/2#booking-form"
               onClick={(e) => {
                 e.preventDefault();
-                // navigate to trek/2 and trigger booking scroll
-                window.location.href = '/trek/2';
-                window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+                // navigate to trek/2 with fragment targeting booking form
+                window.location.href = '/trek/2#booking-form';
               }}
               className="px-4 py-2 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700 shadow-lg transition-all duration-200"
             >
@@ -105,13 +104,12 @@ const Navbar: React.FC = () => {
                 {/* Mobile menu: only Book Now (go to /trek/2) */}
                 <div className="px-4 pt-4">
                   <a
-                    href="/trek/2"
+                    href="/trek/2#booking-form"
                     className="btn-primary w-full text-center"
                     onClick={() => {
                       setIsOpen(false);
                       setTimeout(() => {
-                        window.location.href = '/trek/2';
-                        window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+                        window.location.href = '/trek/2#booking-form';
                       }, 120);
                     }}
                   >
