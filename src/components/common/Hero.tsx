@@ -10,6 +10,7 @@ interface HeroProps {
   height?: 'full' | 'tall' | 'medium' | 'small';
   overlay?: boolean;
   className?: string;
+  compactMobile?: boolean;
 }
 
 const Hero: React.FC<HeroProps> = ({
@@ -21,6 +22,7 @@ const Hero: React.FC<HeroProps> = ({
   height = 'full',
   overlay = true,
   className = '',
+  compactMobile = true,
 }) => {
   const heightClasses = {
     full: 'h-screen',
@@ -31,7 +33,7 @@ const Hero: React.FC<HeroProps> = ({
 
   return (
     <section
-      className={`relative ${heightClasses[height]} flex items-center justify-center overflow-hidden ${className}`}
+      className={`hero-root relative ${heightClasses[height]} flex items-center justify-center overflow-hidden ${className}`}
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
@@ -39,6 +41,12 @@ const Hero: React.FC<HeroProps> = ({
         backgroundRepeat: 'no-repeat',
       }}
     >
+      {/* Mobile-only helper CSS: hide possible external badge overlays that use this class */}
+      <style>{`
+        @media (max-width: 640px) {
+          .hero-root .hero-external-badge { display: none !important; }
+        }
+      `}</style>
       {/* Background Overlay */}
       {overlay && (
         <div className="absolute inset-0 bg-black bg-opacity-40" />
@@ -61,7 +69,7 @@ const Hero: React.FC<HeroProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-purple-200 text-lg mb-4 font-medium"
+              className="text-purple-200 text-sm sm:text-lg mb-2 sm:mb-4 font-medium"
             >
               {subtitle}
             </motion.p>
@@ -71,7 +79,7 @@ const Hero: React.FC<HeroProps> = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold font-display mb-6"
+            className={`text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-bold font-display mb-3 sm:mb-6 ${compactMobile ? 'sm:leading-tight leading-snug line-clamp-2' : ''}`}
           >
             {title}
           </motion.h1>
@@ -81,7 +89,7 @@ const Hero: React.FC<HeroProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto"
+              className="text-sm sm:text-xl text-gray-200 mb-6 sm:mb-8 max-w-xl sm:max-w-3xl mx-auto"
             >
               {description}
             </motion.p>
@@ -92,6 +100,7 @@ const Hero: React.FC<HeroProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
+              className={`flex items-center justify-center gap-3 ${compactMobile ? 'flex-col sm:flex-row' : ''}`}
             >
               {children}
             </motion.div>
@@ -100,8 +109,9 @@ const Hero: React.FC<HeroProps> = ({
       </div>
 
       {/* Animated Elements */}
+      {/* hide scroll indicator on small screens for cleaner mobile UX */}
       <motion.div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+        className="hidden sm:flex absolute bottom-8 left-1/2 transform -translate-x-1/2"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       >

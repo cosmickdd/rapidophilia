@@ -257,27 +257,7 @@ const FAQSection: React.FC = () => {
               <div className="w-12 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
             </motion.div>
             
-            {/* Quick Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-wrap justify-center items-center gap-6 lg:gap-8 pt-4"
-            >
-              <div className="flex items-center space-x-2 text-gray-600">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-sm font-medium">16 Essential Questions</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <span className="text-sm font-medium">Expert Answers</span>
-              </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <span className="text-sm font-medium">Instant Clarity</span>
-              </div>
-            </motion.div>
+            {/* Quick stats removed as requested */}
           </div>
         </motion.div>
 

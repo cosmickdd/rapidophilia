@@ -202,6 +202,9 @@ const TrekDetailPage: React.FC = () => {
   // Form validation state and helpers
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Terms & Conditions acceptance state
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+
   const validateField = React.useCallback((name: string, value: any) => {
     const vf = utilValidateField(trek?.maxGroupSize);
     return vf(name, value);
@@ -233,6 +236,11 @@ const TrekDetailPage: React.FC = () => {
     e.preventDefault();
     // Validate form before submitting
     const currentErrors = validateForm();
+    // enforce T&C acceptance
+    if (!termsAccepted) {
+      currentErrors.termsAccepted = 'Please accept the terms and conditions to continue.';
+    }
+
     setErrors(currentErrors);
     if (Object.keys(currentErrors).length > 0) {
       // Focus first invalid field
@@ -416,21 +424,7 @@ const TrekDetailPage: React.FC = () => {
                     transition={{ duration: 0.8, delay: 0.6 }}
                     className="text-white"
                   >
-                    {/* Badges Row */}
-                    <div className="flex justify-center items-center flex-wrap gap-4 mb-8">
-                      <span className={`px-5 py-3 rounded-full text-base sm:text-lg font-bold ${
-                        trek.difficulty === 'Easy' ? 'bg-green-500' :
-                        trek.difficulty === 'Moderate' ? 'bg-yellow-500' :
-                        trek.difficulty === 'Challenging' ? 'bg-orange-500' : 'bg-red-500'
-                      }`}>
-                        {trek.difficulty}
-                      </span>
-                      <div className="flex items-center bg-white/20 backdrop-blur-sm px-5 py-3 rounded-full">
-                        <StarIcon className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400 mr-2" filled={true} />
-                        <span className="text-base sm:text-lg font-bold">{trek.rating}/5</span>
-                        <span className="text-sm text-gray-200 ml-3">(124 reviews)</span>
-                      </div>
-                    </div>
+                    {/* Badges row removed as requested */}
                     
                     {/* Main Title */}
                     <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 sm:mb-8 leading-tight tracking-tight px-2">
@@ -485,16 +479,7 @@ const TrekDetailPage: React.FC = () => {
                       </motion.button>
                     </div>
 
-                    {/* Trip Dates Card (Hero) - shown only on /trek/2 minimal layout */}
-                    {isMinimalLayout && (
-                      <div className="mt-6 flex justify-center">
-                        <div className="w-full px-4">
-                          <TripDatesCard
-                            variant="hero"
-                          />
-                        </div>
-                      </div>
-                    )}
+                    {/* Trip dates removed from hero as requested */}
                     
                     {/* Quick Features */}
                     <div className="mt-8 sm:mt-10 flex justify-center px-4">
@@ -1165,6 +1150,33 @@ const TrekDetailPage: React.FC = () => {
                               {errors.message && <p id="message-error" className="mt-1 text-sm text-red-600">{errors.message}</p>}
                             </div>
 
+                            {/* Terms & Conditions checkbox */}
+                            <div className="flex items-start">
+                              <div className="flex items-center h-5">
+                                <input
+                                  id="termsAccepted"
+                                  name="termsAccepted"
+                                  type="checkbox"
+                                  checked={termsAccepted}
+                                  onChange={(e) => {
+                                    setTermsAccepted(e.target.checked);
+                                    setErrors(prev => {
+                                      const copy = { ...prev };
+                                      if (copy.termsAccepted) delete copy.termsAccepted;
+                                      return copy;
+                                    });
+                                  }}
+                                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                />
+                              </div>
+                              <div className="ml-3 text-sm">
+                                <label htmlFor="termsAccepted" className="font-medium text-gray-700">
+                                  I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-purple-600 underline">terms & conditions</a>
+                                </label>
+                                {errors.termsAccepted && <p className="text-sm text-red-600 mt-1">{errors.termsAccepted}</p>}
+                              </div>
+                            </div>
+
                             <Button 
                               type="submit" 
                               variant="primary" 
@@ -1390,11 +1402,11 @@ const TrekDetailPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
-                      <p><strong>Flexible Cancellation:</strong> Free cancellation up to 24 hours before the trek start time. Cancellations within 24 hours are non-refundable.</p>
-                      <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure subject to availability and may incur a small fee.</p>
-                      <p><strong>Force Majeure:</strong> In case of adverse weather or local restrictions, we may cancel or postpone. Full refunds or alternate dates will be offered.</p>
-                      <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance.</p>
-                      <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies.</p>
+                              <p><strong>Flexible Cancellation:</strong> Free cancellation up to 24 hours before the trek start time. Cancellations within 24 hours are non-refundable.</p>
+                              <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure, subject to availability, and may incur a small fee. Please contact support to request changes as early as possible.</p>
+                              <p><strong>Force Majeure:</strong> In case of adverse weather, natural disaster, or local restrictions, we may cancel or postpone the trek. We will endeavour to notify affected participants and offer a full refund or alternate dates where feasible; the final remedy may depend on supplier/partner policies.</p>
+                              <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance — group changes are handled case-by-case and may incur different terms.</p>
+                              <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies. Insurance may cover some or all losses depending on your plan.</p>
                     </div>
 
                     <div className="mt-6 text-right">
@@ -1433,7 +1445,8 @@ const TrekDetailPage: React.FC = () => {
                 className="text-white max-w-3xl"
               >
                 <div className="flex items-center space-x-4 mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${{
+                  {/* difficulty badge: hidden on very small screens to reduce clutter */}
+                  <span className={`hidden sm:inline-block px-3 py-1 rounded-full text-xs font-medium ${{
                     'Easy': 'bg-green-500',
                     'Moderate': 'bg-yellow-500',
                     'Challenging': 'bg-orange-500',
@@ -1441,12 +1454,13 @@ const TrekDetailPage: React.FC = () => {
                   }[trek.difficulty]}`}>
                     {trek.difficulty}
                   </span>
-                  <div className="flex items-center space-x-1">
+                  {/* rating: keep on md+ but hide on small mobile */}
+                  <div className="hidden md:flex items-center space-x-1">
                     <StarIcon className="h-4 w-4 text-yellow-400" filled={true} />
                     <span className="text-sm font-medium">{trek.rating}/5</span>
                   </div>
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold mb-4 leading-tight truncate">
                   {trek.title}
                 </h1>
                 <p className="text-lg sm:text-xl lg:text-2xl text-gray-200 mb-6">
@@ -1467,6 +1481,8 @@ const TrekDetailPage: React.FC = () => {
                   </div>
                 </div>
                 
+                {/* Trip dates removed from regular hero as requested */}
+
                 {/* Book Now Button */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1477,7 +1493,14 @@ const TrekDetailPage: React.FC = () => {
                     variant="primary" 
                     size="lg" 
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105"
-                    onClick={() => setActiveTab('booking')}
+                    onClick={() => {
+                      setActiveTab('booking');
+                      // scroll to booking form panel smoothly
+                      setTimeout(() => {
+                        const el = document.getElementById('booking') || document.getElementById('tabpanel-booking') || document.getElementById('booking-top-dates');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 120);
+                    }}
                   >
                     Book Now - ₹3,999
                   </Button>
@@ -1665,10 +1688,10 @@ const TrekDetailPage: React.FC = () => {
 
               <div className="space-y-4 text-sm text-gray-700 leading-relaxed">
                 <p><strong>Flexible Cancellation:</strong> Free cancellation up to 24 hours before the trek start time. Cancellations within 24 hours are non-refundable.</p>
-                <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure subject to availability and may incur a small fee.</p>
-                <p><strong>Force Majeure:</strong> In case of adverse weather or local restrictions, we may cancel or postpone. Full refunds or alternate dates will be offered.</p>
-                <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance.</p>
-                <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies.</p>
+                <p><strong>Rescheduling:</strong> Rescheduling is allowed up to 48 hours before departure, subject to availability, and may incur a small fee. Please reach out early to request changes.</p>
+                <p><strong>Force Majeure:</strong> In the event of adverse weather, natural incidents, or legal/local restrictions, we may cancel or postpone trips. We will aim to notify you and provide full refunds or alternative dates when possible; supplier constraints may affect the final remedy.</p>
+                <p><strong>Group Bookings:</strong> For group cancellations or modifications, please contact our support team for tailored assistance — group terms may vary and are evaluated case-by-case.</p>
+                <p className="text-xs text-gray-500">If you have booked with travel insurance, please check your policy for coverage on cancellations and emergencies; insurance may cover certain losses subject to the insurer's terms.</p>
               </div>
 
               <div className="mt-6 text-right">

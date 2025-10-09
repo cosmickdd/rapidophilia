@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiMenu, 
-  FiX, 
-  FiChevronDown 
+  FiX
 } from 'react-icons/fi';
 import { TbMountain } from 'react-icons/tb';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
-  const location = useLocation();
+  // dropdown state removed; navbar is intentionally minimal
+  // location removed; minimal navbar doesn't need route awareness
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,28 +22,8 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Trek', path: '/trek' },
-    { name: 'Adventure', path: '/adventure' },
-    { name: 'Explore', path: '/explore' },
-    { name: 'Blog', path: '/blog' },
-    {
-      name: 'Policies',
-      dropdown: [
-        { name: 'Refund Policy', path: '/refund-policy' },
-        { name: 'Privacy Policy', path: '/privacy-policy' },
-        { name: 'Terms of Use', path: '/terms-of-use' },
-      ],
-    },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const toggleDropdown = (name: string) => {
-    setDropdownOpen(dropdownOpen === name ? null : name);
-  };
+  // Keep navigation minimal: only Home is allowed from the navbar
+  // isActive helper removed; navbar intentionally minimal
 
   return (
     <motion.nav
@@ -85,99 +64,19 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <div key={item.name} className="relative">
-                {item.dropdown ? (
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleDropdown(item.name)}
-                      className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                        isScrolled
-                          ? 'text-gray-800 hover:text-purple-600 font-medium'
-                          : 'text-gray-800 hover:text-purple-600 font-medium'
-                      }`}
-                    >
-                      <span>{item.name}</span>
-                      {FiChevronDown({
-                        className: `transform transition-transform duration-200 ${
-                          dropdownOpen === item.name ? 'rotate-180' : ''
-                        }`
-                      })}
-                    </button>
-
-                    <AnimatePresence>
-                      {dropdownOpen === item.name && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-2"
-                        >
-                          {item.dropdown.map((subItem) => (
-                            <Link
-                              key={subItem.name}
-                              to={subItem.path}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
-                              onClick={() => setDropdownOpen(null)}
-                            >
-                              {subItem.name}
-                            </Link>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : (
-                  <Link
-                    to={item.path}
-                    className={`px-3 py-2 text-sm font-medium transition-colors duration-200 relative ${
-                      isActive(item.path)
-                        ? isScrolled
-                          ? 'text-purple-600 font-semibold'
-                          : 'text-purple-600 font-semibold'
-                        : isScrolled
-                        ? 'text-gray-800 hover:text-purple-600 font-medium'
-                        : 'text-gray-800 hover:text-purple-600 font-medium'
-                    }`}
-                  >
-                    {item.name}
-                    {isActive(item.path) && (
-                      <motion.div
-                        layoutId="navbar-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-600 to-violet-600"
-                      />
-                    )}
-                  </Link>
-                )}
-              </div>
-            ))}
-
-            {/* CTA Button */}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <a
-                onClick={(e) => {
-                  e.preventDefault();
-                  // try smooth scroll first
-                  const el = document.getElementById('booking');
-                  if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  } else {
-                    // fallback: navigate to trek page and dispatch event so page can scroll on mount
-                    window.location.href = '/trek/2';
-                  }
-                  // notify other listeners
-                  window.dispatchEvent(new CustomEvent('scroll-to-booking'));
-                }}
-                href="/trek"
-                className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                  isScrolled 
-                    ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700' 
-                    : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700'
-                } flex items-center gap-2`}
-              >
-                <span className="">Book Now</span>
-              </a>
-            </motion.div>
+            {/* Desktop: show only Book Now button that links to /trek/2 */}
+            <a
+              href="/trek/2"
+              onClick={(e) => {
+                e.preventDefault();
+                // navigate to trek/2 and trigger booking scroll
+                window.location.href = '/trek/2';
+                window.dispatchEvent(new CustomEvent('scroll-to-booking'));
+              }}
+              className="px-4 py-2 rounded-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700 shadow-lg transition-all duration-200"
+            >
+              Book Now
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -203,75 +102,21 @@ const Navbar: React.FC = () => {
               className="lg:hidden bg-white border-t border-gray-200"
             >
               <div className="py-4 space-y-2">
-                {navItems.map((item) => (
-                  <div key={item.name}>
-                    {item.dropdown ? (
-                      <div>
-                        <button
-                          onClick={() => toggleDropdown(item.name)}
-                          className="flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-gray-800 hover:bg-purple-50 hover:text-purple-600"
-                        >
-                          <span>{item.name}</span>
-                          {FiChevronDown({
-                            className: `transform transition-transform duration-200 ${
-                              dropdownOpen === item.name ? 'rotate-180' : ''
-                            }`
-                          })}
-                        </button>
-                        <AnimatePresence>
-                          {dropdownOpen === item.name && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="pl-4"
-                            >
-                              {item.dropdown.map((subItem) => (
-                                <Link
-                                  key={subItem.name}
-                                  to={subItem.path}
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600"
-                                  onClick={() => {
-                                    setIsOpen(false);
-                                    setDropdownOpen(null);
-                                  }}
-                                >
-                                  {subItem.name}
-                                </Link>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    ) : (
-                      <Link
-                        to={item.path}
-                        className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${
-                          isActive(item.path)
-                            ? 'text-purple-600 bg-purple-50'
-                            : 'text-gray-800 hover:bg-purple-50 hover:text-purple-600'
-                        }`}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {item.name}
-                      </Link>
-                    )}
-                  </div>
-                ))}
+                {/* Mobile menu: only Book Now (go to /trek/2) */}
                 <div className="px-4 pt-4">
-                  <Link
-                    to="/trek"
+                  <a
+                    href="/trek/2"
                     className="btn-primary w-full text-center"
                     onClick={() => {
                       setIsOpen(false);
-                      // ensure mobile users are taken directly to booking form on trek page
                       setTimeout(() => {
+                        window.location.href = '/trek/2';
                         window.dispatchEvent(new CustomEvent('scroll-to-booking'));
                       }, 120);
                     }}
                   >
                     Book Now
-                  </Link>
+                  </a>
                 </div>
               </div>
             </motion.div>

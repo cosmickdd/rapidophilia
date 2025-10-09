@@ -15,6 +15,7 @@ import {
   RefundPolicyPage,
   TermsOfUsePage
 } from './utils/lazyComponents';
+import TermsPage from './pages/TermsPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import BookingVerificationPage from './pages/BookingVerificationPage';
 
@@ -38,6 +39,7 @@ function App() {
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+            <Route path="/terms" element={<TermsPage />} />
           </Routes>
         </Suspense>
       </div>

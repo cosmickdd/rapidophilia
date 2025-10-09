@@ -16,21 +16,7 @@ import CONTACT from '../../config/contact';
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
-  const quickLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/about' },
-    { name: 'Trek', path: '/trek' },
-    { name: 'Adventure', path: '/adventure' },
-    { name: 'Explore', path: '/explore' },
-    { name: 'Blog', path: '/blog' },
-    { name: 'Contact', path: '/contact' },
-  ];
-
-  const policyLinks = [
-    { name: 'Refund Policy', path: '/refund-policy' },
-    { name: 'Privacy Policy', path: '/privacy-policy' },
-    { name: 'Terms of Use', path: '/terms-of-use' },
-  ];
+  // Quick links and policy links removed to restrict navigation
 
   const socialLinks = [
     { name: 'Facebook', icon: FiFacebook, url: '#' },
@@ -107,80 +93,8 @@ const Footer: React.FC = () => {
             </motion.div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <motion.h3
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-lg font-semibold mb-6"
-            >
-              Quick Links
-            </motion.h3>
-            <motion.ul
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="space-y-3"
-            >
-              {quickLinks.map((link, index) => (
-                <motion.li
-                  key={link.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link
-                    to={link.path}
-                    className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                  >
-                    {link.name}
-                  </Link>
-                </motion.li>
-              ))}
-            </motion.ul>
-          </div>
-
-          {/* Policies */}
-          <div>
-            <motion.h3
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-lg font-semibold mb-6"
-            >
-              Policies
-            </motion.h3>
-            <motion.ul
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="space-y-3"
-            >
-              {policyLinks.map((link, index) => (
-                <motion.li
-                  key={link.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Link
-                    to={link.path}
-                    className="text-gray-400 hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
-                  >
-                    {link.name}
-                  </Link>
-                </motion.li>
-              ))}
-            </motion.ul>
-          </div>
-
           {/* Contact Info */}
-          <div>
+          <div className="lg:col-span-2">
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
