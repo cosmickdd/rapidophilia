@@ -31,6 +31,8 @@ const Footer: React.FC = () => {
     { icon: FiMapPin, text: CONTACT.address },
   ];
 
+  // footer no longer opens the policies modal; download moved to booking form
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="container-custom">
@@ -127,6 +129,23 @@ const Footer: React.FC = () => {
                 );
               })}
             </motion.ul>
+          </div>
+
+          {/* Policies Section */}
+          <div className="lg:col-span-1">
+            <motion.h3
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-lg font-semibold mb-6"
+            >
+              Policies
+            </motion.h3>
+            <div className="space-y-3">
+              <Link to="/terms-of-use" className="text-gray-400 hover:text-white block">Terms & Conditions</Link>
+              <Link to="/privacy-policy" className="text-gray-400 hover:text-white block">Privacy Policy</Link>
+              <Link to="/refund-policy" className="text-gray-400 hover:text-white block">Cancellation & Refund Policy</Link>
+            </div>
           </div>
         </div>
 

@@ -11,6 +11,8 @@ import FAQSection from '../components/common/FAQSection';
 import GalleryGrid from '../components/common/GalleryGrid';
 import { sendBookingEmail } from '../utils/emailService';
 import TripDatesCard from '../components/common/TripDatesCard';
+// Policies modal removed in favor of inline PDF generation utility
+// generatePoliciesPdf will be dynamically imported when needed to avoid build-time resolution issues
 import { initializeRazorpayPayment } from '../utils/razorpayService';
 import { validateForm as utilValidateForm, validateField as utilValidateField } from '../utils/validation';
 
@@ -216,6 +218,7 @@ const TrekDetailPage: React.FC = () => {
 
   // Terms & Conditions acceptance state
   const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  // policies modal removed; PDF is generated inline via utility
 
   const validateField = React.useCallback((name: string, value: any) => {
     const vf = utilValidateField(trek?.maxGroupSize);
@@ -1179,9 +1182,54 @@ const TrekDetailPage: React.FC = () => {
                                 />
                               </div>
                               <div className="ml-3 text-sm">
-                                <label htmlFor="termsAccepted" className="font-medium text-gray-700">
-                                  I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-purple-600 underline">terms & conditions</a>
-                                </label>
+                                <div className="flex items-center space-x-2">
+                                  <label htmlFor="termsAccepted" className="font-medium text-gray-700">I agree to the terms & conditions</label>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (!termsAccepted) {
+                                        setErrors(prev => ({ ...prev, termsAccepted: 'Please accept the terms to download policies.' }));
+                                        return;
+                                      }
+
+                                      // First try the client-side generator (preferred)
+                                      try {
+                                        const mod = await import('../utils/policiesPdf');
+                                        const gen = (mod && (mod as any).generatePoliciesPdf) ? (mod as any).generatePoliciesPdf : (mod && (mod as any).default) ? (mod as any).default : null;
+                                        if (gen && typeof gen === 'function') {
+                                          await gen();
+                                          return;
+                                        }
+                                      } catch (clientErr) {
+                                        // Continue to fallback download below
+                                        // console.debug for debugging in browser
+                                        // eslint-disable-next-line no-console
+                                        console.warn('[TrekDetailPage] client PDF generation failed, falling back to static file', clientErr);
+                                      }
+
+                                      // Fallback: attempt to download the pre-generated PDF from the server/public root
+                                      try {
+                                        const fallbackUrl = '/policies_combined.pdf';
+                                        const a = document.createElement('a');
+                                        a.href = fallbackUrl;
+                                        // Provide a sensible filename for download
+                                        a.download = 'Rapidophilia-policies.pdf';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        a.remove();
+                                      } catch (downloadErr) {
+                                        // Final fallback: notify user
+                                        // eslint-disable-next-line no-alert
+                                        alert('Failed to download PDF. Please refresh the page or contact support.');
+                                        // eslint-disable-next-line no-console
+                                        console.error('[TrekDetailPage] fallback download failed', downloadErr);
+                                      }
+                                    }}
+                                    className="text-sm text-purple-600 underline"
+                                  >
+                                    View policies (PDF)
+                                  </button>
+                                </div>
                                 {errors.termsAccepted && <p className="text-sm text-red-600 mt-1">{errors.termsAccepted}</p>}
                               </div>
                             </div>
@@ -1205,6 +1253,8 @@ const TrekDetailPage: React.FC = () => {
                                 `Book Now - ₹${(3999 * formData.participants).toLocaleString()}`
                               )}
                             </Button>
+
+                              {/* removed helper — PDF link is now next to the T&C checkbox */}
                           </form>
                         </div>
                       </div>
@@ -1436,7 +1486,7 @@ const TrekDetailPage: React.FC = () => {
   // Regular layout for other trek pages
   return (
     <Layout>
-      <div className="min-h-screen">
+  <div className="min-h-screen">
         {/* Hero Section */}
         <div className="relative h-[70vh] overflow-hidden">
           <img
@@ -1713,7 +1763,7 @@ const TrekDetailPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </Layout>
+  </Layout>
   );
 };
 

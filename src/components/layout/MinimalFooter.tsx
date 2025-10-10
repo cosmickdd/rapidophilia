@@ -58,6 +58,11 @@ const MinimalFooter: React.FC = () => {
           {/* Professional Footer Bottom */}
           <div className="border-t border-gray-800 pt-8 mt-12">
             <div className="flex flex-col items-center space-y-4">
+              <div className="space-x-4">
+                <button onClick={() => { window.location.href = '/terms-of-use'; window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-white text-sm">Terms & Conditions</button>
+                <button onClick={() => { window.location.href = '/privacy-policy'; window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-white text-sm">Privacy Policy</button>
+                <button onClick={() => { window.location.href = '/refund-policy'; window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-gray-400 hover:text-white text-sm">Cancellation & Refund Policy</button>
+              </div>
               <div className="flex items-center space-x-2 text-gray-400">
                 <span className="text-sm font-medium">Crafted with</span>
                 <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
