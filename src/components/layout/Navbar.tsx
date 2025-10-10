@@ -25,6 +25,9 @@ const Navbar: React.FC = () => {
   // Keep navigation minimal: only Home is allowed from the navbar
   // isActive helper removed; navbar intentionally minimal
 
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const disableLogoNav = /(^\/refund-policy$)|(^\/terms-of-use$)|(^\/privacy-policy$)|(^\/verify-booking)/.test(path);
+
   return (
     <motion.nav
       initial={{ y: -100 }}
@@ -37,30 +40,38 @@ const Navbar: React.FC = () => {
     >
       <div className="container-custom">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center space-x-2 text-2xl font-bold"
-          >
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              className={`p-2 rounded-lg ${
-                isScrolled
-                  ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
-                  : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
-              }`}
-            >
-              {TbMountain({})}
-            </motion.div>
-            <span
-              className={`font-display font-bold text-xl ${
-                isScrolled ? 'text-gray-900' : 'text-gray-900'
-              }`}
-            >
-              Rapidophilia
-            </span>
-          </Link>
+          {/* Logo (non-navigable on policy & verification pages) */}
+          {disableLogoNav ? (
+            <div className="flex items-center space-x-2 text-2xl font-bold">
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className={`p-2 rounded-lg ${
+                  isScrolled
+                    ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
+                    : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
+                }`}
+              >
+                {TbMountain({})}
+              </motion.div>
+              <span className={`font-display font-bold text-xl ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>Rapidophilia</span>
+            </div>
+          ) : (
+            <Link to="/" className="flex items-center space-x-2 text-2xl font-bold">
+              <motion.div
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+                className={`p-2 rounded-lg ${
+                  isScrolled
+                    ? 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
+                    : 'bg-gradient-to-r from-purple-600 to-violet-600 text-white shadow-lg'
+                }`}
+              >
+                {TbMountain({})}
+              </motion.div>
+              <span className={`font-display font-bold text-xl ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}>Rapidophilia</span>
+            </Link>
+          )}
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">

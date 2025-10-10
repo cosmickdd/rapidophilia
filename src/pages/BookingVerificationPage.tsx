@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { getBookingData } from '../utils/ticketService';
@@ -6,6 +6,39 @@ import { getBookingData } from '../utils/ticketService';
 const BookingVerificationPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const bookingData = bookingId ? getBookingData(bookingId) : null;
+  const [qrData, setQrData] = useState<string | null>(null);
+  const [ticketPreviewHtml, setTicketPreviewHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!bookingData) return;
+      try {
+        const qs = await (await import('../utils/ticketService')).generateQRCode(bookingData as any);
+        if (!mounted) return;
+        setQrData(qs);
+
+        // build a simple small ticket preview HTML (sanitized)
+        const preview = `
+          <div style="font-family: Arial, Helvetica, sans-serif; width: 320px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
+            <div style="background: linear-gradient(90deg,#7C3AED,#3B82F6); color: white; padding:12px; text-align:center;">
+              <strong>RAPIDOPHILIA TREK TICKET</strong>
+            </div>
+            <div style="padding:12px; background:white; color:#111;">
+              <div style="font-size:14px; font-weight:600;">${bookingData.trekTitle}</div>
+              <div style="font-size:13px; margin-top:6px;">${bookingData.firstName} ${bookingData.lastName}</div>
+              <div style="font-size:12px; color:#666; margin-top:8px;">Booking ID: <span style="font-family: monospace; color:#7C3AED">${bookingData.bookingId}</span></div>
+            </div>
+            <div style="padding:12px; background:#f9fafb; text-align:center;"><img src="${qs}" style="width:140px;height:140px;border-radius:8px;" alt="QR" ></div>
+          </div>
+        `;
+        setTicketPreviewHtml(preview);
+      } catch (e) {
+        console.error('Failed to build ticket preview', e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [bookingData]);
 
   return (
     <Layout>
@@ -62,11 +95,34 @@ const BookingVerificationPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-green-800">
-                  This booking is valid and confirmed. Welcome to the trek!
-                </p>
-              </div>
+                <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex-1">
+                    <p className="text-sm text-green-800">
+                      This booking is valid and confirmed. Welcome to the trek!
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    {/* Ticket preview screenshot-like area */}
+                    <div className="bg-white rounded-lg p-3 shadow-md text-left">
+                      <div className="text-sm font-semibold text-gray-700 mb-2">Your ticket preview</div>
+                      {ticketPreviewHtml ? (
+                        <div className="mx-auto" dangerouslySetInnerHTML={{ __html: ticketPreviewHtml }} />
+                      ) : (
+                        <div className="w-40 h-40 bg-gray-100 flex items-center justify-center text-xs text-gray-400">Preview loading…</div>
+                      )}
+                      <div className="mt-3 text-xs text-gray-500">Note: This is a preview screenshot of your ticket. The QR code below is what you'll present for verification.</div>
+                      {qrData && (
+                        <div className="mt-3 text-center">
+                          <img src={qrData} alt="Ticket QR" className="mx-auto w-36 h-36 rounded-md shadow-sm" />
+                          <div className="mt-2 text-xs text-gray-600 text-left max-w-xs mx-auto">
+                            <strong className="text-gray-700">What this QR contains:</strong>
+                            <p className="text-gray-600 text-xs mt-1">The QR encodes a JSON object with these fields: bookingId, name, trek, participants, paymentId, and a verification URL that points to the booking verification endpoint (e.g. <span className="font-mono">/verify-booking/&lt;bookingId&gt;</span>). Presenting or scanning this QR lets staff quickly verify your booking details.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
             </>
           ) : (
             <>

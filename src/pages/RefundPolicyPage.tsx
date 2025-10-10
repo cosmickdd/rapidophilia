@@ -63,6 +63,10 @@ const RefundPolicyPage: React.FC = () => {
                 <p className="text-gray-700 leading-relaxed text-lg mb-4">
                   Rapidophilia will only process refunds after receiving the refunded amount from Suppliers. Refunds typically return to the original payment source (bank/card) unless otherwise agreed in writing.
                 </p>
+                {/* Highlighted processing time note */}
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md mb-4">
+                  <p className="text-yellow-800 font-semibold">Refund process completion may take 5 to 10 working days.</p>
+                </div>
                 <p className="text-gray-700 leading-relaxed text-lg">
                   Convenience fees, Taxes, or certain non-refundable amounts may be deducted from the total refund.
                 </p>

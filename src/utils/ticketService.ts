@@ -378,12 +378,117 @@ export const downloadTicket = (ticketData: TicketData): void => {
   
   const link = document.createElement('a');
   link.href = url;
-  link.download = `Rapidophilia_Trek_Ticket_${ticketData.bookingId}.html`;
+    link.download = `Rapidophilia_Trek_Ticket_${ticketData.bookingId}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   
   URL.revokeObjectURL(url);
+};
+
+// Download ticket as a PDF using html2pdf (client-side). Falls back to jsPDF/html2canvas if necessary.
+export const downloadTicketPdf = async (ticketData: TicketData): Promise<void> => {
+    // Create a container and insert the ticket HTML
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.width = '100%';
+    container.style.height = 'auto';
+    container.style.zIndex = '99999';
+    container.style.pointerEvents = 'none';
+    container.style.opacity = '0';
+    container.innerHTML = generateTicketHTML(ticketData);
+    document.body.appendChild(container);
+
+    // wait for images (QR) to load and paint
+    await new Promise<void>((resolve) => {
+        const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
+        if (imgs.length === 0) return resolve();
+        let loaded = 0;
+        imgs.forEach(img => {
+            if (img.complete) {
+                loaded++;
+                if (loaded === imgs.length) resolve();
+            } else {
+                img.addEventListener('load', () => {
+                    loaded++;
+                    if (loaded === imgs.length) resolve();
+                });
+                img.addEventListener('error', () => {
+                    loaded++;
+                    if (loaded === imgs.length) resolve();
+                });
+            }
+        });
+    });
+
+    // Try dynamic import of html2pdf
+    try {
+        const html2pdfModule = await import('html2pdf.js');
+        // html2pdf default export is a function
+        const opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     `Rapidophilia_Trek_Ticket_${ticketData.bookingId}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+        } as any;
+        // @ts-ignore
+        await html2pdfModule.default().from(container).set(opt).save();
+    } catch (err) {
+        console.warn('html2pdf dynamic import failed, falling back to window.html2pdf or jsPDF method', err);
+        // Fallback: try window.html2pdf (if included via CDN)
+        // @ts-ignore
+        const winHtml2pdf = (window as any).html2pdf;
+        if (winHtml2pdf) {
+            try {
+                // @ts-ignore
+                await winHtml2pdf().from(container).save();
+            } catch (e) {
+                console.error('window.html2pdf error', e);
+                // final fallback: generate a PDF via jsPDF + html2canvas
+                await fallbackJsPdf(container, ticketData);
+            }
+        } else {
+            await fallbackJsPdf(container, ticketData);
+        }
+    } finally {
+        document.body.removeChild(container);
+    }
+};
+
+const fallbackJsPdf = async (container: HTMLElement, ticketData: TicketData) => {
+    try {
+        // dynamic import jsPDF and html2canvas
+        const [{ jsPDF }, html2canvas] = await Promise.all([
+            import('jspdf'),
+            import('html2canvas')
+        ]);
+
+        const canvas = await html2canvas.default(container, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        // Fit the canvas to page width
+        const imgProps = (pdf as any).getImageProperties(imgData);
+        const imgWidth = pageWidth - 40; // 20pt margin each side
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+        pdf.addImage(imgData, 'JPEG', 20, 20, imgWidth, imgHeight);
+        pdf.save(`Rapidophilia_Trek_Ticket_${ticketData.bookingId}.pdf`);
+    } catch (e) {
+        console.error('fallbackJsPdf failed', e);
+        // as a last resort, fallback to HTML download
+        const blob = new Blob([generateTicketHTML(ticketData)], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Rapidophilia_Trek_Ticket_${ticketData.bookingId}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
 };
 
 // Store booking data in localStorage (simple solution for now)

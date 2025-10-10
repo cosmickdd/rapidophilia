@@ -20,6 +20,11 @@ export interface Trek {
   earlyBirdDeadline?: Date;
   limitedSeats?: number;
   seatsRemaining?: number;
+  // Optional structured duration fields
+  days?: number;
+  nights?: number;
+  // Optional ISO start date string (if provided, UI will use this instead of computing next weekend)
+  startDate?: string;
 }
 
 export interface Adventure {

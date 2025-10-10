@@ -14,6 +14,7 @@ import TripDatesCard from '../components/common/TripDatesCard';
 // Policies modal removed in favor of inline PDF generation utility
 // generatePoliciesPdf will be dynamically imported when needed to avoid build-time resolution issues
 import { initializeRazorpayPayment } from '../utils/razorpayService';
+import { Trek } from '../types';
 import { validateForm as utilValidateForm, validateField as utilValidateField } from '../utils/validation';
 
 // Icon Components
@@ -61,13 +62,18 @@ const XIcon = ({ className }: { className?: string }) => (
 );
 
 // Trek Data (using your existing trek data structure)
-const sampleTrek = {
-  id: 2,
+const sampleTrek: Trek = {
+  id: '2',
   title: "Trek To The Highest Peak Of Lower Himalayas - Nag Tibba",
   shortDescription: "Experience the breathtaking beauty of Nag Tibba, the highest peak in the lower Himalayas",
   description: "Nag Tibba, standing at 3,022 meters (9,915 feet), is the highest peak in the lower Himalayas and offers one of the most scenic trekking experiences in Uttarakhand. This trek is perfect for beginners and experienced trekkers alike, offering stunning views of the Bandarpoonch, Kedarnath, and Gangotri peaks.",
   image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
   duration: "3N 2D",
+  gallery: [],
+  reviews: [],
+  // provide structured duration fields so UI can compute header/dates
+  days: 2,
+  nights: 3,
   difficulty: "Moderate",
   location: "Dehradun, Uttarakhand",
   price: 3999,
@@ -717,18 +723,27 @@ const TrekDetailPage: React.FC = () => {
                   >
                     {/* Section Header */}
                     <div className="text-center mb-8">
-                      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Nag Tibba Trek – 2 Days / 1 Night</h2>
+                      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{`${trek.title.replace('Trek To ', '').replace('-', '–').split(' - ')[0]} – ${trek.days ?? 2} Days / ${trek.nights ?? 1} Nights`}</h2>
                       <p className="text-purple-600 font-semibold text-lg">{(() => {
-                        const t = new Date();
-                        const dow = t.getDay();
-                        const daysUntilSat = ((6 - dow) + 7) % 7 || 7;
-                        const sat = new Date(t);
-                        sat.setDate(t.getDate() + daysUntilSat);
-                        const sun = new Date(sat);
-                        sun.setDate(sat.getDate() + 1);
+                        // Determine start date: prefer trek.startDate (ISO), otherwise compute next Friday
+                        const parseISO = (s: string) => {
+                          try { return new Date(s); } catch { return null; }
+                        };
+                        const today = new Date();
+                        let start = trek.startDate ? parseISO(trek.startDate) : null;
+                        if (!start || Number.isNaN(start.getTime())) {
+                          // compute next Friday
+                          const dow = today.getDay();
+                          // Friday is 5
+                          const daysUntilFri = ((5 - dow) + 7) % 7 || 7;
+                          start = new Date(today);
+                          start.setDate(today.getDate() + daysUntilFri);
+                        }
+                        const days = trek.days ?? 2;
+                        const end = new Date(start);
+                        end.setDate(start.getDate() + Math.max(days, 1));
                         const short = (d: Date) => d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-                        const weekendLabel = `${short(sat)} – ${short(sun)}`;
-                        return `${weekendLabel} | Delhi to Delhi (Kashmere Gate Pickup & Drop)`;
+                        return `${short(start)} – ${short(end)} | Delhi to Delhi (Kashmere Gate Pickup & Drop)`;
                       })()}</p>
                     </div>
 
@@ -1402,9 +1417,8 @@ const TrekDetailPage: React.FC = () => {
                                     Refer to cancellation policy for peace of mind.
                                   </p>
                                 </div>
-                                <button onClick={() => setShowCancelPolicy(true)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                  View Details
-                                </button>
+                                {/* Navigate to the canonical refund/cancellation policy page */}
+                                <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</a>
                               </div>
                             </div>
                           </div>
