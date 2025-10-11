@@ -131,6 +131,7 @@ interface FormData {
 const TrekDetailPage: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'gallery' | 'reviews' | 'booking'>('overview');
+  // Tab state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [showTimer, setShowTimer] = useState(() => {
@@ -210,6 +211,8 @@ const TrekDetailPage: React.FC = () => {
 
     return () => window.removeEventListener('scroll-to-booking', handler as EventListener);
   }, []);
+
+  // No JS sticky logic required: use CSS `position: sticky` for the tabs
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -537,54 +540,12 @@ const TrekDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Mobile-First Tab Navigation */}
+            {/* Mobile-First Tab Navigation (CSS-sticky under navbar) */}
             <div className="container-custom py-4">
-              {/* Mobile: Horizontal scroll tabs */}
-              <div className="sm:hidden">
-                <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                  {[
-                    { id: 'overview', label: 'Overview' },
-                    { id: 'itinerary', label: 'Itinerary' },
-                    { id: 'gallery', label: 'Gallery' },
-                    { id: 'reviews', label: 'Reviews' },
-                    { id: 'booking', label: 'Book Now' }
-                  ].map((tab) => (
-                    <motion.button
-                      key={tab.id}
-                      onClick={() => {
-                        setActiveTab(tab.id as any);
-                        // Auto scroll to center
-                        setTimeout(() => {
-                          const element = document.getElementById(`tab-${tab.id}`);
-                          if (element) {
-                            element.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-                          }
-                        }, 100);
-                      }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`
-                        flex-shrink-0 px-4 py-3 rounded-full font-medium text-sm transition-all duration-300 min-w-max focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-                        ${
-                          activeTab === tab.id
-                            ? 'bg-purple-600 text-white shadow-lg'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300 hover:shadow-sm'
-                        }
-                      `}
-                      id={`tab-${tab.id}`}
-                      role="tab"
-                      aria-selected={activeTab === tab.id}
-                      aria-controls={`tabpanel-${tab.id}`}
-                    >
-                      {tab.label}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Desktop: Grid tabs */}
-              <div className="hidden sm:block">
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-2">
-                  <div className="grid grid-cols-5 gap-2">
+              <div className="sticky top-16 z-30 bg-white/95 backdrop-blur-sm py-2">
+                {/* Mobile: Horizontal scroll tabs */}
+                <div className="sm:hidden">
+                  <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide px-3">
                     {[
                       { id: 'overview', label: 'Overview' },
                       { id: 'itinerary', label: 'Itinerary' },
@@ -594,29 +555,62 @@ const TrekDetailPage: React.FC = () => {
                     ].map((tab) => (
                       <motion.button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setActiveTab(tab.id as any);
+                          // Auto scroll to center
+                          setTimeout(() => {
+                            const element = document.getElementById(`tab-${tab.id}`);
+                            if (element) element.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                          }, 100);
+                        }}
+                        whileTap={{ scale: 0.95 }}
                         className={`
-                          relative py-4 px-4 rounded-xl font-medium text-sm transition-all duration-300
-                          ${
-                            activeTab === tab.id
-                              ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                              : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                          }
+                          flex-shrink-0 px-4 py-3 rounded-full font-medium text-sm transition-all duration-300 min-w-max focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+                          ${activeTab === tab.id ? 'bg-purple-600 text-white shadow-lg' : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300 hover:shadow-sm'}
                         `}
+                        id={`tab-${tab.id}`}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
+                        aria-controls={`tabpanel-${tab.id}`}
                       >
-                        <span className="text-xs">{tab.label}</span>
-                        {activeTab === tab.id && (
-                          <motion.div
-                            layoutId="activeTab"
-                            className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl -z-10"
-                            initial={false}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                          />
-                        )}
+                        {tab.label}
                       </motion.button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Desktop: Grid tabs */}
+                <div className="hidden sm:block px-3">
+                  <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 p-2">
+                    <div className="grid grid-cols-5 gap-2">
+                      {[
+                        { id: 'overview', label: 'Overview' },
+                        { id: 'itinerary', label: 'Itinerary' },
+                        { id: 'gallery', label: 'Gallery' },
+                        { id: 'reviews', label: 'Reviews' },
+                        { id: 'booking', label: 'Book Now' }
+                      ].map((tab) => (
+                        <motion.button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id as any)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`relative py-4 px-4 rounded-xl font-medium text-sm transition-all duration-300 ${
+                            activeTab === tab.id ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                          }`}
+                        >
+                          <span className="text-xs">{tab.label}</span>
+                          {activeTab === tab.id && (
+                            <motion.div
+                              layoutId="activeTab"
+                              className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl -z-10"
+                              initial={false}
+                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                            />
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
