@@ -62,7 +62,8 @@ router.post('/create-payment-link', async (req, res) => {
 
 // Handle Payment Success Callback
 router.get('/payment-success', (req, res) => {
-  const { razorpay_payment_id, razorpay_payment_link_id, razorpay_payment_link_reference_id, razorpay_payment_link_status, razorpay_signature } = req.query;
+  // only pull the fields we use to avoid unused-variable warnings
+  const { razorpay_payment_id, razorpay_payment_link_status } = req.query;
   
   // Verify the payment signature here if needed
   

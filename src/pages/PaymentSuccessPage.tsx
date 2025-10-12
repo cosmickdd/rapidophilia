@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Layout from '../components/layout/Layout';
-import { getBookingData, generateQRCode, downloadTicket, type BookingData, type TicketData } from '../utils/ticketService';
+import { getBookingData, downloadTicket, type BookingData, type TicketData } from '../utils/ticketService';
 
 const PaymentSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -13,7 +13,7 @@ const PaymentSuccessPage: React.FC = () => {
     isLoading: true
   });
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
-  const [qrCodeDataURL, setQrCodeDataURL] = useState<string>('');
+  // QR removed; keep ticketData only
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
 
   useEffect(() => {
@@ -34,22 +34,16 @@ const PaymentSuccessPage: React.FC = () => {
       if (booking) {
         setBookingData(booking);
         
-        // Generate QR code
-        generateQRCode(booking).then(qrCode => {
-          setQrCodeDataURL(qrCode);
-          
-          // Prepare ticket data
-          const ticket: TicketData = {
-            ...booking,
-            qrCodeDataURL: qrCode,
-            trekDate: '15-16 December 2024', // You can make this dynamic
-            reportingTime: '06:00 AM',
-            reportingLocation: 'Dehradun Railway Station'
-          };
-          setTicketData(ticket);
-        }).catch(error => {
-          console.error('Error generating QR code:', error);
-        });
+        // Prepare ticket data without embedding QR as per product decision
+        // Use the requested combined format: "17 Oct 2025 — Report 09:00 PM"
+        const ticket: TicketData = {
+          ...booking,
+          qrCodeDataURL: '', // keep field but empty
+          trekDate: '17 Oct 2025 — Report 09:00 PM',
+          reportingTime: '09:00 PM',
+          reportingLocation: 'Kashmere Gate ISBT Delhi'
+        };
+        setTicketData(ticket);
       }
     }
 
@@ -159,20 +153,7 @@ Thank you for booking with Rapidophilia! Your ticket is ready for download.`;
                 </div>
               </div>
 
-              {/* QR Code Display */}
-              {qrCodeDataURL && (
-                <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-6">
-                  <p className="text-sm text-gray-600 mb-3 text-center">Your Ticket QR Code</p>
-                  <img 
-                    src={qrCodeDataURL} 
-                    alt="Ticket QR Code" 
-                    className="w-32 h-32 mx-auto rounded-lg"
-                  />
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    Show this QR code at the reporting location
-                  </p>
-                </div>
-              )}
+              {/* QR display removed intentionally */}
               
               <div className="space-y-3">
                 {/* Download Ticket Button */}
@@ -214,12 +195,7 @@ Thank you for booking with Rapidophilia! Ticket downloaded successfully.`;
                   <span>Share on WhatsApp</span>
                 </motion.button>
                 
-                <Link
-                  to="/"
-                  className="block w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors text-center"
-                >
-                  Back to Home
-                </Link>
+                {/* Back to Home removed per request */}
               </div>
             </>
           ) : (

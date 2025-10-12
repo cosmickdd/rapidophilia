@@ -18,6 +18,7 @@ import {
 import TermsPage from './pages/TermsPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import BookingVerificationPage from './pages/BookingVerificationPage';
+import DevPreviewPaymentSuccess from './pages/DevPreviewPaymentSuccess';
 
 function App() {
   return (
@@ -35,6 +36,8 @@ function App() {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blog/:id" element={<BlogDetailPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
+            {/* Dev-only preview route: seeds a booking and redirects to payment-success */}
+            <Route path="/dev/preview-payment-success" element={<DevPreviewPaymentSuccess />} />
             <Route path="/verify-booking/:bookingId" element={<BookingVerificationPage />} />
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

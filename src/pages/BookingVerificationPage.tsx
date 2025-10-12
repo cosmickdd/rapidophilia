@@ -6,19 +6,13 @@ import { getBookingData } from '../utils/ticketService';
 const BookingVerificationPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const bookingData = bookingId ? getBookingData(bookingId) : null;
-  const [qrData, setQrData] = useState<string | null>(null);
   const [ticketPreviewHtml, setTicketPreviewHtml] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
     (async () => {
       if (!bookingData) return;
       try {
-        const qs = await (await import('../utils/ticketService')).generateQRCode(bookingData as any);
-        if (!mounted) return;
-        setQrData(qs);
-
-        // build a simple small ticket preview HTML (sanitized)
+        // Build a simple small ticket preview HTML without QR image
         const preview = `
           <div style="font-family: Arial, Helvetica, sans-serif; width: 320px; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
             <div style="background: linear-gradient(90deg,#7C3AED,#3B82F6); color: white; padding:12px; text-align:center;">
@@ -28,8 +22,10 @@ const BookingVerificationPage: React.FC = () => {
               <div style="font-size:14px; font-weight:600;">${bookingData.trekTitle}</div>
               <div style="font-size:13px; margin-top:6px;">${bookingData.firstName} ${bookingData.lastName}</div>
               <div style="font-size:12px; color:#666; margin-top:8px;">Booking ID: <span style="font-family: monospace; color:#7C3AED">${bookingData.bookingId}</span></div>
+              <div style="font-size:12px; color:#444; margin-top:6px;">17 Oct 2025 — Report 09:00 PM</div>
+              <div style="font-size:12px; color:#444; margin-top:4px;">Kashmere Gate ISBT Delhi</div>
             </div>
-            <div style="padding:12px; background:#f9fafb; text-align:center;"><img src="${qs}" style="width:140px;height:140px;border-radius:8px;" alt="QR" ></div>
+            <div style="padding:12px; background:#f9fafb; text-align:center; color:#6b7280; font-size:12px;">Present this ticket at the reporting location</div>
           </div>
         `;
         setTicketPreviewHtml(preview);
@@ -37,7 +33,7 @@ const BookingVerificationPage: React.FC = () => {
         console.error('Failed to build ticket preview', e);
       }
     })();
-    return () => { mounted = false; };
+    // no cleanup required here
   }, [bookingData]);
 
   return (
@@ -110,16 +106,7 @@ const BookingVerificationPage: React.FC = () => {
                       ) : (
                         <div className="w-40 h-40 bg-gray-100 flex items-center justify-center text-xs text-gray-400">Preview loading…</div>
                       )}
-                      <div className="mt-3 text-xs text-gray-500">Note: This is a preview screenshot of your ticket. The QR code below is what you'll present for verification.</div>
-                      {qrData && (
-                        <div className="mt-3 text-center">
-                          <img src={qrData} alt="Ticket QR" className="mx-auto w-36 h-36 rounded-md shadow-sm" />
-                          <div className="mt-2 text-xs text-gray-600 text-left max-w-xs mx-auto">
-                            <strong className="text-gray-700">What this QR contains:</strong>
-                            <p className="text-gray-600 text-xs mt-1">The QR encodes a JSON object with these fields: bookingId, name, trek, participants, paymentId, and a verification URL that points to the booking verification endpoint (e.g. <span className="font-mono">/verify-booking/&lt;bookingId&gt;</span>). Presenting or scanning this QR lets staff quickly verify your booking details.</p>
-                          </div>
-                        </div>
-                      )}
+                      <div className="mt-3 text-xs text-gray-500">Note: This is a preview screenshot of your ticket. Present this ticket at the reporting location for verification.</div>
                     </div>
                   </div>
                 </div>

@@ -12,24 +12,11 @@ interface Props {
 }
 
 const computeNextWeekend = () => {
-  // Compute next Friday 9:00 PM -> Sunday 9:00 PM
-  const now = new Date();
-  const dow = now.getDay(); // 0..6, 5 === Friday
-  // days until upcoming Friday (0 if today is Friday)
-  let daysUntilFri = (5 - dow + 7) % 7;
-  // if today is Friday but it's already past 9pm, move to next Friday
-  if (daysUntilFri === 0) {
-    if (now.getHours() >= 21) daysUntilFri = 7;
-  }
-
-  const fri = new Date(now);
-  fri.setDate(now.getDate() + daysUntilFri);
-  fri.setHours(21, 0, 0, 0); // Friday 9:00 PM
-
-  const sun = new Date(fri);
-  sun.setDate(fri.getDate() + 2); // Sunday
-  sun.setHours(21, 0, 0, 0); // Sunday 9:00 PM
-
+  // For this release we show the fixed weekend dates requested by product:
+  // Friday 17 Oct 2025 21:00 -> Sunday 19 Oct 2025 21:00
+  // Note: months are 0-indexed in Date constructor (9 === October)
+  const fri = new Date(2025, 9, 17, 21, 0, 0, 0);
+  const sun = new Date(2025, 9, 19, 21, 0, 0, 0);
   return { start: fri, end: sun };
 };
 

@@ -297,13 +297,8 @@ export const generateTicketHTML = (ticketData: TicketData): string => {
                 </div>
                 
                 <div class="detail-row">
-                    <span class="detail-label">Trek Date</span>
+                    <span class="detail-label">Trek Date & Reporting</span>
                     <span class="detail-value">${ticketData.trekDate}</span>
-                </div>
-                
-                <div class="detail-row">
-                    <span class="detail-label">Reporting Time</span>
-                    <span class="detail-value">${ticketData.reportingTime}</span>
                 </div>
                 
                 <div class="detail-row">
@@ -339,11 +334,7 @@ export const generateTicketHTML = (ticketData: TicketData): string => {
             
             <div class="qr-section">
                 <div class="booking-id">${ticketData.bookingId}</div>
-                <img src="${ticketData.qrCodeDataURL}" alt="QR Code" class="qr-code" />
-                <p class="qr-instruction">
-                    Scan this QR code for quick verification<br>
-                    Show this ticket at the reporting location
-                </p>
+                <div style="margin-bottom:12px; color:#6b7280; font-size:13px;">Present this ticket at the reporting location for verification</div>
             </div>
         </div>
         
